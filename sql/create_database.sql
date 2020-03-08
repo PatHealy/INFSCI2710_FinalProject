@@ -12,3 +12,17 @@ CREATE DATABASE final_project
     CONNECTION LIMIT = -1;
 	
 -- Create Tables
+create table example(
+	example_id serial PRIMARY KEY,
+	description VARCHAR(100)
+);
+
+-- Populate Tables
+INSERT INTO example (description) 
+VALUES ('foo');
+
+INSERT INTO example (description) 
+VALUES ('bar');
+
+-- Test Query
+SELECT * FROM example;
