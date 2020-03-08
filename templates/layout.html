@@ -5,6 +5,20 @@
 </head>
 <body>
 	<h1>This is the header!</h1>
+	<!-- flashed messages -->
+	{% with messages = get_flashed_messages() %}
+		{% if messages %}
+			<ul class=flashes>
+			{% for message in messages %}
+				<li>{{ message }}</li>
+			{% endfor %}
+			</ul>
+			<br/>
+		{% endif %}
+	{% endwith %}
+	<!-- End of flashed messages-->
 	{% block body %} {% endblock %}
+	<br/>
+	<h4>This is the footer</h4>
 </body>
 </html>

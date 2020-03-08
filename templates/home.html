@@ -3,5 +3,14 @@
 
 {% endblock %}
 {% block body %}
-<h3>Hello world!</h3>
+	<h3>Hello world!</h3>
+	<h2>This is the output of the query "SELECT * FROM example;"</h2>
+	{% if example_contents %}
+		<ul>
+		{% for row in example_contents %}
+			<li>{{ row }}</li>
+		{% endfor %}
+		</ul>
+		<br/>
+	{% endif %}
 {% endblock %}
