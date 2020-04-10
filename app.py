@@ -28,20 +28,50 @@ db = SQLAlchemy(app)
 
 @app.route('/')
 def home_page():
-	example_contents = get_example()
-	return render_template('home.html', example_contents=example_contents)
+	return render_template('home.html')
+
+@app.route('/browse')
+def browse_home():
+	return render_template('browse.html', type='none', keys=None, contents=None, order_by=None, order=None)
+
+@app.route('/browse/<type>')
+def browse_stuff(type):
+	keys, contents = get_all(type)
+	return render_template('browse.html', type=type, keys=keys, contents=contents, order_by=None, order=None)
+
+@app.route('/browse/<type>/<order_by>/<order>')
+def browse_stuff_order_by(type,order_by, order):
+	keys, contents = get_all(type, order_by, order)
+	return render_template('browse.html', type=type, keys=keys, contents=contents, order_by=order_by, order=order)
+
+@app.route('/create')
+def create_home():
+	return render_template('create.html')
+
+def get_all(type, order_by='_na', order='_na'):
+	print("Order by " + order_by + ", " + order)
+	if order == 'DESC':
+		#call query with DESC
+		pass
+	else:
+		#call query without DESC
+		pass
+	return get_example()
 
 def get_example():
-	returned = []
+	keys = ['name', 'a', 'b']
 
-	with engine.connect() as con:
-		statement = text("""SELECT * FROM example;""")
-		rs = con.execute(statement)
+	contents = []
+	contents.append(['Example Item 1', 'example a', 'example b'])
 
-		for row in rs:
-			returned.append(row)
+	#with engine.connect() as con:
+	#	statement = text("""SELECT * FROM example;""")
+	#	rs = con.execute(statement)
 
-	return returned
+	#	for row in rs:
+	#		returned.append(row)
+
+	return keys, contents
 
 # Models
 # This is likely unnecessary for most of what we need to do,

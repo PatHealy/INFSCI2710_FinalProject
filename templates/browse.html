@@ -1,0 +1,110 @@
+{% extends "layout.html" %}
+{% block head %}
+<script type="text/javascript">
+	var type = "{{ type }}";
+	var order = "{{ order }}";
+	var order_by = "{{ order_by }}";
+
+	function browse_category(cat){
+		location.href = cat;
+	}
+
+	function desc(key){
+		if(order_by == key && order == "DESC"){
+			reorder('ASC');
+		}else{
+			order_by = key;
+			reorder('DESC');
+		}
+	}
+
+	function reorder(order){
+		location.href = '/browse/' + type + "/" + order_by + "/" + order;
+	}
+</script>
+{% endblock %}
+{% block body %}
+<!-- 
+This is essentially the home page of browsing. It links to other pages that handle specific kinds of browsing.
+
+Handles the Employee Browsing operations
+
+•	Employee Browsing Employees must be able to search the database for particular items based on various attributes and must also be able to do browsing (i.e., less focused searching). Examples:
+o	Search for cases by status and timeframe
+o	Search for a customer and view products the customer has purchased
+o	Search for common resolutions by product
+ -->
+<div class="card">
+	<h2 class ="card-header">Browse Home Page</h2>
+	<div class="card-body">
+		<h4>This page handles browsing all entities in the database.</h4>
+		<button id="browse_customers_button" type="button" class="btn btn-primary" onclick="browse_category('/browse/customers')">Browse Customers</button>
+		<button id="browse_products_button" type="button" class="btn btn-primary" onclick="browse_category('/browse/products')">Browse Products</button>
+		<button id="browse_salespeople_button" type="button" class="btn btn-primary" onclick="browse_category('/browse/salespeople')">Browse Salespeople</button>
+		<button id="browse_employees_button" type="button" class="btn btn-primary" onclick="browse_category('/browse/employees')">Browse Employees</button>
+		<button id="browse_cases_button" type="button" class="btn btn-primary" onclick="browse_category('/browse/cases')">Browse Cases</button>
+		<button id="browse_resolutions_button" type="button" class="btn btn-primary" onclick="browse_category('/browse/resolutions')">Browse Resolutions</button>
+	</div>
+</div>
+<br/>
+{% if type == "customers" %}
+
+{% endif %}
+
+<!-- Start Table -->
+{% if keys != None %}
+<table class="table">
+	<thead>
+		<tr>
+			{% for key in keys %}
+				<th scope="col">{{ key }} <button id="{{key}}_order_button" type="button" class="btn btn-link" onclick="desc('{{key}}')" style="font-size:200%;">-</button></th>
+			{% endfor %}
+		</tr>
+	</thead>
+	<tbody>
+	{% for item in contents %}
+		<tr>
+			{% for v in item %}
+			<td>{{ v }}</td>
+			{% endfor %}
+		</tr>
+	{% else %}
+		There are no contents...
+	{% endfor %}
+	</tbody>
+</table>
+{% else %}
+Choose a category to continue.
+{% endif %}
+
+<script type="text/javascript">
+	if (type == "customers"){
+		$("#browse_customers_button").removeClass("btn-primary");
+		$("#browse_customers_button").addClass("btn-secondary");
+	} else if (type == "products"){
+		$("#browse_products_button").removeClass("btn-primary");
+		$("#browse_products_button").addClass("btn-secondary");
+	} else if (type == "salespeople"){
+		$("#browse_salespeople_button").removeClass("btn-primary");
+		$("#browse_salespeople_button").addClass("btn-secondary");
+	} else if (type == "employees"){
+		$("#browse_employees_button").removeClass("btn-primary");
+		$("#browse_employees_button").addClass("btn-secondary");
+	} else if (type == "cases"){
+		$("#browse_cases_button").removeClass("btn-primary");
+		$("#browse_cases_button").addClass("btn-secondary");
+	} else if (type == "resolutions"){
+		$("#browse_resolutions_button").removeClass("btn-primary");
+		$("#browse_resolutions_button").addClass("btn-secondary");
+	}
+
+	var button_node = document.getElementById(order_by +"_order_button");
+	if(order == "DESC"){
+		console.log("DESC");
+		button_node.innerHTML = "v";
+	} else if(order == "ASC"){
+		button_node.innerHTML = "^";
+	}
+</script>
+
+{% endblock %}

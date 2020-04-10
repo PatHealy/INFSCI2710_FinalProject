@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+{% block head %}
+<script type="text/javascript">
+	var type = {{ type }};
+</script>
+{% endblock %}
+{% block body %}
+<!-- 
+This is essentially the home page of browsing. It links to other pages that handle specific kinds of browsing.
+
+Handles the Employee Browsing operations
+
+•	Employee Browsing Employees must be able to search the database for particular items based on various attributes and must also be able to do browsing (i.e., less focused searching). Examples:
+o	Search for cases by status and timeframe
+o	Search for a customer and view products the customer has purchased
+o	Search for common resolutions by product
+ -->
+<a>Browse Customers</a>
+<a>Browse Products</a>
+<a>Browse Salespeople</a>
+<a>Browse Employees</a>
+<a>Browse Cases</a>
+<a>Browse Resolutions</a>
+
+{% if type == "customers" %}
+
+{% endif %}
+
+{% if contents %}
+	{% for item in contents %}
+		<div class="card">
+			<h1 class ="card-header"> {{ item['name'] }}</h1>
+			<div class="card-body">
+				<ul>
+					{% for k, v in item.items() %}
+					<li>{{ k }}: {{ v }}</li>
+					{% endfor %}
+				</ul>
+			</div>
+		</div>
+		<br/>
+	{% endfor %}
+{% endif %}
+
+{% endblock %}
