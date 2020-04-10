@@ -6,20 +6,19 @@
 	var order_by = "{{ order_by }}";
 
 	function browse_category(cat){
-		location.href = cat;
+		window.location = "/browse/" + cat;
 	}
 
-	function desc(key){
-		if(order_by == key && order == "DESC"){
-			reorder('ASC');
-		}else{
-			order_by = key;
-			reorder('DESC');
-		}
+	function reorder(element, order){
+		window.location = '/browse/' + type + "/" + element + "/" + order;
 	}
 
-	function reorder(order){
-		location.href = '/browse/' + type + "/" + order_by + "/" + order;
+	function edit(row){
+		//TODO
+	}
+
+	function create(){
+		//TODO
 	}
 </script>
 {% endblock %}
@@ -35,47 +34,56 @@ o	Search for a customer and view products the customer has purchased
 o	Search for common resolutions by product
  -->
 <div class="card">
-	<h2 class ="card-header">Browse Home Page</h2>
+	<h2 class ="card-header">Browse</h2>
 	<div class="card-body">
 		<h4>This page handles browsing all entities in the database.</h4>
-		<button id="browse_customers_button" type="button" class="btn btn-primary" onclick="browse_category('/browse/customers')">Browse Customers</button>
-		<button id="browse_products_button" type="button" class="btn btn-primary" onclick="browse_category('/browse/products')">Browse Products</button>
-		<button id="browse_salespeople_button" type="button" class="btn btn-primary" onclick="browse_category('/browse/salespeople')">Browse Salespeople</button>
-		<button id="browse_employees_button" type="button" class="btn btn-primary" onclick="browse_category('/browse/employees')">Browse Employees</button>
-		<button id="browse_cases_button" type="button" class="btn btn-primary" onclick="browse_category('/browse/cases')">Browse Cases</button>
-		<button id="browse_resolutions_button" type="button" class="btn btn-primary" onclick="browse_category('/browse/resolutions')">Browse Resolutions</button>
+		<button id="browse_customers_button" type="button" class="btn btn-primary" onclick="browse_category('customers')">Browse Customers</button>
+		<button id="browse_products_button" type="button" class="btn btn-primary" onclick="browse_category('products')">Browse Products</button>
+		<button id="browse_salespeople_button" type="button" class="btn btn-primary" onclick="browse_category('salespeople')">Browse Salespeople</button>
+		<button id="browse_employees_button" type="button" class="btn btn-primary" onclick="browse_category('employees')">Browse Employees</button>
+		<button id="browse_cases_button" type="button" class="btn btn-primary" onclick="browse_category('cases')">Browse Cases</button>
+		<button id="browse_resolutions_button" type="button" class="btn btn-primary" onclick="browse_category('resolutions')">Browse Resolutions</button>
+		<br/><br/>
+		<!-- Start Table -->
+		{% if keys != None %}
+		<table class="table">
+			<thead class="thead-light">
+				<tr>
+					{% for key in keys %}
+						<th scope="col">{{ key }} 
+							{% if key != order_by %}
+								<button type="button" class="btn btn-link" onclick="reorder('{{key}}', 'DESC')" style="font-size:200%;">-</button>
+							{% elif order == 'DESC' %}
+								<button type="button" class="btn btn-link" onclick="reorder('{{key}}', 'ASC')" style="font-size:200%;">v</button>
+							{% else %}
+								<button type="button" class="btn btn-link" onclick="browse_category('{{type}}')" style="font-size:200%;">^</button>
+							{% endif %}
+						</th>
+					{% endfor %}
+				</tr>
+			</thead>
+			<tbody>
+			{% for item in contents %}
+				<tr>
+					{% for v in item %}
+					<td>{{ v }}</td>
+					{% endfor %}
+					<td><button type="button" class="btn btn-warning" onclick="edit({{ item }})">edit...</button></td>
+				</tr>
+			{% else %}
+				There are no contents...
+			{% endfor %}
+			</tbody>
+		</table>
+		<button type="button" class="btn btn-success" onclick="create()">Add a new entry in {{type}}</button>
+		{% else %}
+			<h2>Choose a category to continue.</h2>
+		{% endif %}
 	</div>
 </div>
 <br/>
-{% if type == "customers" %}
+<br/>
 
-{% endif %}
-
-<!-- Start Table -->
-{% if keys != None %}
-<table class="table">
-	<thead>
-		<tr>
-			{% for key in keys %}
-				<th scope="col">{{ key }} <button id="{{key}}_order_button" type="button" class="btn btn-link" onclick="desc('{{key}}')" style="font-size:200%;">-</button></th>
-			{% endfor %}
-		</tr>
-	</thead>
-	<tbody>
-	{% for item in contents %}
-		<tr>
-			{% for v in item %}
-			<td>{{ v }}</td>
-			{% endfor %}
-		</tr>
-	{% else %}
-		There are no contents...
-	{% endfor %}
-	</tbody>
-</table>
-{% else %}
-Choose a category to continue.
-{% endif %}
 
 <script type="text/javascript">
 	if (type == "customers"){
@@ -96,14 +104,6 @@ Choose a category to continue.
 	} else if (type == "resolutions"){
 		$("#browse_resolutions_button").removeClass("btn-primary");
 		$("#browse_resolutions_button").addClass("btn-secondary");
-	}
-
-	var button_node = document.getElementById(order_by +"_order_button");
-	if(order == "DESC"){
-		console.log("DESC");
-		button_node.innerHTML = "v";
-	} else if(order == "ASC"){
-		button_node.innerHTML = "^";
 	}
 </script>
 

@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% block head %}
+<script type="text/javascript">
+	var primary_key = {{primary_key}};
+	function submit_edit(){
+		//TODO: put all the stuff in a JSON object and POST it to /update
+	}
+</script>
+{% endblock %}
+{% block body %}
+<div class="card">
+	<h2 class ="card-header">Edit the {{table}} entry</h2>
+	<div class="card-body">
+		<form class="form-group">
+			{% for k, v in content.items() %}
+				{% if types[k] == 'boolean' %}
+					<label for="{{k}}"><em>{{k}}</em>:</label>
+					<input id="{{k}}" type="checkbox" class="form-check-input" value={{v}}>
+				{% elif types[k] == 'number' %}
+					<label for="{{k}}"><em>{{k}}</em>:</label>
+					<input id="{{k}}" class="form-control" type="number" value={{v}}>
+				{% elif types[k] == 'string' %}
+					<label for="{{k}}"><em>{{k}}</em>:</label>
+					<textarea id="{{k}}" class="form-control" rows="3" value="{{v}}"></textarea>
+				{% endif %}
+			{% endfor %}
+			<button class="btn btn-primary" onclick="submit_edit()">Submit</button>
+		</form>
+	</div>
+</div>
+{% endblock %}
