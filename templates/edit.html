@@ -2,9 +2,35 @@
 {% block head %}
 <script type="text/javascript">
 	var primary_key = {{primary_key}};
+	var col_names = [{% for k in content.keys() %} "{{k}}", {% endfor %}];
+
 	function submit_edit(){
 		//TODO: put all the stuff in a JSON object and POST it to /update
+		var toSend = {};
+		for(var i = 0; i < col_names.length; i++){
+			var v = document.getElementById(col_names[i]).value;
+			var k = col_names[i];
+			if(v == 'on'){
+				v = document.getElementById(col_names[i]).checked;
+			}
+			toSend[k] = v;
+		}
+
+		toSend['table'] = "{{table}}";
+		
+		var xhr = new XMLHttpRequest();
+		var url = "/update";
+		xhr.open("POST", url, true);
+		xhr.setRequestHeader("Content-type", "application/json");
+		xhr.onreadystatechange = function () { 
+		if (xhr.readyState == 4 && xhr.status == 200) {
+				window.location = "/update/{{table}}";
+			}
+		}
+		var data = JSON.stringify(toSend);
+		xhr.send(data);
 	}
+
 </script>
 {% endblock %}
 {% block body %}
@@ -13,19 +39,46 @@
 	<div class="card-body">
 		<form class="form-group">
 			{% for k, v in content.items() %}
-				{% if types[k] == 'boolean' %}
-					<label for="{{k}}"><em>{{k}}</em>:</label>
-					<input id="{{k}}" type="checkbox" class="form-check-input" value={{v}}>
+				{% if 'static' in types[k] %}
+					{% if 'boolean' in types[k] %}
+						{% if v %}
+							<label for="{{k}}"><em>{{k}}</em>:</label>
+							&emsp; &emsp; 
+							<input id="{{k}}" type="checkbox" class="form-check-input" checked onclick="return false;">
+						{% else %}
+							<label for="{{k}}"><em>{{k}}</em>:</label>
+							&emsp; &emsp; 
+							<input id="{{k}}" type="checkbox" class="form-check-input" onclick="return false;">
+						{% endif %}
+					{% elif 'number' in types[k]  %}
+						<label for="{{k}}"><em>{{k}}</em>:</label>
+						<input id="{{k}}" class="form-control" type="number" value={{v}} disabled>
+					{% elif 'string' in types[k] %}
+						<label for="{{k}}"><em>{{k}}</em>:</label>
+						<textarea id="{{k}}" class="form-control" rows="3" disabled>{{v}}</textarea>
+					{% endif %}
+				{% elif types[k] == 'boolean' %}
+					{% if v %}
+						<label for="{{k}}"><em>{{k}}</em>:</label>
+						&emsp; &emsp; 
+						<input id="{{k}}" type="checkbox" class="form-check-input" checked>
+					{% else %}
+						<label for="{{k}}"><em>{{k}}</em>:</label>
+						&emsp; &emsp; 
+						<input id="{{k}}" type="checkbox" class="form-check-input">
+					{% endif %}
 				{% elif types[k] == 'number' %}
 					<label for="{{k}}"><em>{{k}}</em>:</label>
 					<input id="{{k}}" class="form-control" type="number" value={{v}}>
 				{% elif types[k] == 'string' %}
 					<label for="{{k}}"><em>{{k}}</em>:</label>
-					<textarea id="{{k}}" class="form-control" rows="3" value="{{v}}"></textarea>
+					<textarea id="{{k}}" class="form-control" rows="3">{{v}}</textarea>
 				{% endif %}
+				<br/>
 			{% endfor %}
-			<button class="btn btn-primary" onclick="submit_edit()">Submit</button>
+			<br/>
 		</form>
+		<button class="btn btn-primary" onclick="submit_edit()">Submit</button>
 	</div>
 </div>
 {% endblock %}

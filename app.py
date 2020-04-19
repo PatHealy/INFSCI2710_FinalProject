@@ -8,6 +8,8 @@ from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
 from sqlalchemy import inspect
 from sqlalchemy.sql import text
 
+import json
+
 app = Flask(__name__)
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/' #this is just for development purposes -- not a real secret key!
 
@@ -60,15 +62,22 @@ def create_new_entry():
 
 @app.route('/edit/<type>/<pk>')
 def edit(type, pk):
-	content = {} # TODO: get the current values of this entry
-	types = {} # TODO: get the types of this entry
+	content = get_row(type, pk)
+	types = get_columns(type)
 	return render_template('edit.html', table=type, primary_key=pk, content=content, types=types)
 
 @app.route('/update', methods=['POST'])
 def update():
-	# TODO: process the sent data 
-	# do the update and notify the user if it was successful with the flash() method
-	pass
+	entry = request.json;
+	table_name = entry['table']
+	del entry['table']
+	#TODO -- actually do the update
+	return "Updated"
+
+@app.route('/update/<table>')
+def update_redirect(table):
+	flash("Updated " + table + " entry!")
+	return redirect("/browse/" + table)
 
 def get_all(type, order_by='_na', order='_na'):
 	# TODO: actually interact with the database here
@@ -83,12 +92,24 @@ def get_all(type, order_by='_na', order='_na'):
 		pass
 	return get_example()
 
+def get_columns(type):
+	"Returns a dictionary containing (column name, data type)"
+	#TODO
+	#Data type can be number, string, or boolean. Also may include the word static, if they should not be editable (such as in primary keys)
+	return {'Example 1': 'number static', 'Example 2': 'string', 'Example 3': 'boolean static', 'Example 4': 'string static'}
+
+def get_row(type, pk):
+	"Returns a dictionary of a whole row in the form (columnName,value)"\
+	#TODO
+	#Placeholder
+	return {'Example 1': 5, 'Example 2': 'This is an example text area.', 'Example 3': True, 'Example 4': 'This text area cannot be edited'}
+
 def get_example():
 	#This method is just a placeholder until we actually interface with the DB
-	keys = ['name', 'a', 'b']
+	keys = ['id', 'name', 'a', 'b']
 
 	contents = []
-	contents.append(['Example Item 1', 'example a', 'example b'])
+	contents.append(['1','Example Item 1', 'example a', 'example b'])
 
 	#This commented out bit shows how to interact with the DB
 	#with engine.connect() as con:

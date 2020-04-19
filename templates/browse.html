@@ -13,8 +13,8 @@
 		window.location = '/browse/' + type + "/" + element + "/" + order;
 	}
 
-	function edit(row){
-		//TODO
+	function edit(pk){
+		window.location = '/edit/' + type + "/" + pk;
 	}
 
 	function create(){
@@ -68,7 +68,7 @@ o	Search for common resolutions by product
 					{% for v in item %}
 					<td>{{ v }}</td>
 					{% endfor %}
-					<td><button type="button" class="btn btn-warning" onclick="edit({{ item }})">edit...</button></td>
+					<td><button type="button" class="btn btn-warning" onclick="edit({{ item[0] }})">edit...</button></td>
 				</tr>
 			{% else %}
 				There are no contents...
