@@ -1,11 +1,64 @@
 {% extends "layout.html" %}
 {% block head %}
+<script type="text/javascript">
+	var col_names = [{% for k in types.keys() %} "{{k}}", {% endfor %}];
 
+	function submit_new(){
+		//TODO: put all the stuff in a JSON object and POST it to /update
+		var toSend = {};
+		for(var i = 0; i < col_names.length; i++){
+			var elem = document.getElementById(col_names[i]);
+			if(elem != null){
+				var v = elem.value;
+				var k = col_names[i];
+				if(v == 'on'){
+					v = elem.checked;
+				}
+				toSend[k] = v;
+			}
+		}
+
+		toSend['table'] = "{{table}}";
+		
+		var xhr = new XMLHttpRequest();
+		var url = "/create";
+		xhr.open("POST", url, true);
+		xhr.setRequestHeader("Content-type", "application/json");
+		xhr.onreadystatechange = function () { 
+		if (xhr.readyState == 4 && xhr.status == 200) {
+				window.location = "/update/{{table}}/new";
+			}
+		}
+		var data = JSON.stringify(toSend);
+		xhr.send(data);
+	}
+
+</script>
 {% endblock %}
 {% block body %}
-	<!--  
-	TODO: create the form for creating new entries. This will depend on whatever type is passed through jinja templating. 
-	On submit, it will need to be packaged into json and posted to /create
-
-	-->
+<div class="card">
+	<h2 class ="card-header">Create a {{table}} entry</h2>
+	<div class="card-body">
+		<form class="form-group">
+			{% for k, v in types.items() %}
+				{% if 'static' in v %}
+					<em>{{k}}</em>: Uneditedable
+				{% elif v == 'boolean' %}
+					<label for="{{k}}"><em>{{k}}</em>:</label>
+					&emsp; &emsp; 
+					<input id="{{k}}" type="checkbox" class="form-check-input">
+				{% elif v == 'number' %}
+					<label for="{{k}}"><em>{{k}}</em>:</label>
+					<input id="{{k}}" class="form-control" type="number">
+				{% elif v == 'string' %}
+					<label for="{{k}}"><em>{{k}}</em>:</label>
+					<textarea id="{{k}}" class="form-control" rows="3"></textarea>
+				{% endif %}
+				<br/>
+			{% endfor %}
+			<br/>
+		</form>
+		<button class="btn btn-primary" onclick="submit_new()">Submit</button>
+	</div>
+</div>
 {% endblock %}

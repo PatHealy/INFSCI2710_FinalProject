@@ -51,14 +51,17 @@ def browse_stuff_order_by(type,order_by, order):
 
 @app.route('/create/<type>')
 def create(type):
-	types = {} # TODO: get the 
+	types = get_columns(type)
 	return render_template('create.html', table=type, types=types)
 
 @app.route('/create', methods=['POST'])
 def create_new_entry():
-	# TODO: process the sent data 
-	# do the row creation and notify the user if it was successful with the flash() method
-	pass
+	entry = request.json;
+	print(entry)
+	table_name = entry['table']
+	del entry['table']
+	#TODO -- actually do the insert
+	return "Created"
 
 @app.route('/edit/<type>/<pk>')
 def edit(type, pk):
@@ -74,9 +77,12 @@ def update():
 	#TODO -- actually do the update
 	return "Updated"
 
-@app.route('/update/<table>')
-def update_redirect(table):
-	flash("Updated " + table + " entry!")
+@app.route('/update/<table>/<update_type>')
+def update_redirect(table, update_type):
+	if update_type == "update":
+		flash("Updated " + table + " entry!")
+	elif update_type == "new":
+		flash("Create new " + table + " entry!")
 	return redirect("/browse/" + table)
 
 def get_all(type, order_by='_na', order='_na'):
