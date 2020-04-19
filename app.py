@@ -57,10 +57,32 @@ def create(type):
 @app.route('/create', methods=['POST'])
 def create_new_entry():
 	entry = request.json;
-	print(entry)
 	table_name = entry['table']
 	del entry['table']
-	#TODO -- actually do the insert
+
+	cols = get_columns(table_name)
+
+	statement_text = """INSERT INTO  """ + table_name + """ ("""
+
+	for k in entry.keys():
+		statement_text = statement_text + k + """, """
+
+	statement_text = statement_text[:-2] + """) VALUES ("""
+
+	for k,v in entry.items():
+		if 'string' in cols[k]:
+			statement_text = statement_text + """'""" + v + """', """
+		else:
+			statement_text = statement_text + v + """, """
+
+	statement_text = statement_text[:-2] + """);"""
+
+	print(statement_text)
+
+	with engine.connect() as con:
+		statement = text(statement_text)
+		rs = con.execute(statement)
+
 	return "Created"
 
 @app.route('/edit/<type>/<pk>')
@@ -74,7 +96,39 @@ def update():
 	entry = request.json;
 	table_name = entry['table']
 	del entry['table']
-	#TODO -- actually do the update
+
+	pks = get_pks(table_name)
+	cols = get_columns(table_name)
+
+	pk_pairs = {}
+	for k in pks:
+		pk_pairs[k] = entry[k]
+		del entry[k]
+
+	statement_text = """UPDATE """ + table_name + """ SET """
+
+	for k,v in entry.items():
+		if 'string' in cols[k]:
+			statement_text = statement_text + k + """ = '""" + v + """', """
+		else:
+			statement_text = statement_text + k + """ = """ + v + """, """
+
+	statement_text = statement_text[:-2] + """ WHERE """ 
+
+	for k,v in pk_pairs.items():
+		if 'string' in cols[k]:
+			statement_text = statement_text + k + """ = '""" + v + """', """
+		else:
+			statement_text = statement_text + k + """ = """ + v + """, """
+
+	statement_text = statement_text[:-2] + """;"""
+
+	print(statement_text)
+
+	with engine.connect() as con:
+		statement = text(statement_text)
+		rs = con.execute(statement)
+
 	return "Updated"
 
 @app.route('/update/<table>/<update_type>')
@@ -115,15 +169,49 @@ def get_all(type, order_by='_na', order='_na'):
 
 def get_columns(type):
 	"Returns a dictionary containing (column name, data type)"
-	#TODO
 	#Data type can be number, string, or boolean. Also may include the word static, if they should not be editable (such as in primary keys)
-	return {'Example 1': 'number static', 'Example 2': 'string', 'Example 3': 'boolean static', 'Example 4': 'string static'}
+	returned = {}
+	cols = inspector.get_columns(type)
+	for c in cols:
+		t = 'string'
+		if 'NUMERIC' in str(c['type']) or 'INTEGER' in str(c['type']):
+			t = 'number'
+
+		#TODO -- handle timestamps and dates
+
+		if c['name'] in get_pks(type):
+			t = t + " static"
+
+		returned[c['name']] = t
+		#for k, v in c.items():
+		#	print(k + ": " + str(v))
+		#print()
+
+	return returned
+
+def get_pks(table):
+	"Returns a list of primary keys of the given table"
+	return inspector.get_pk_constraint(table)['constrained_columns']
 
 def get_row(type, pk):
-	"Returns a dictionary of a whole row in the form (columnName,value)"\
-	#TODO
-	#Placeholder
-	return {'Example 1': 5, 'Example 2': 'This is an example text area.', 'Example 3': True, 'Example 4': 'This text area cannot be edited'}
+	"Returns a dictionary of a whole row in the form (columnName,value)"
+	pk_name = get_pks(type)[0]
+	header = [x['name'] for x in inspector.get_columns(type)]
+	statement_text = """SELECT * FROM """ + type + """ WHERE """ + pk_name + """=""" +pk + """;"""
+
+	rows = []
+	with engine.connect() as con:
+		statement = text(statement_text)
+		rs = con.execute(statement)
+
+		for row in rs:
+			rows.append(row)
+
+	returned = {}
+	for i in range(len(header)):
+		returned[header[i]] = rows[0][i]
+
+	return returned
 
 def get_example():
 	#This method is just a placeholder until we actually interface with the DB
@@ -148,3 +236,4 @@ def get_example():
 class Example(db.Model):
 	example_id = db.Column(db.Integer, primary_key=True)
 	description = db.Column(db.String(100)) # String is equivalent to VARCHAR
+
