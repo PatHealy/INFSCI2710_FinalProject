@@ -42,26 +42,45 @@ def browse_stuff(type):
 	keys, contents = get_all(type)
 	cols = get_columns(type)
 	types = []
-	for v in cols.values():
+	string_types = []
+	for k,v in cols.items():
 		if 'string' in v:
+			string_types.append(k)
 			types.append(True)
 		else:
 			types.append(False)
 	flash("Viewing " + type.upper())
-	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=None, order=None, types=types, num_types=len(types))
+	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=None, order=None, types=types, num_types=len(types), string_items=string_types)
 
 @app.route('/browse/<type>/<order_by>/<order>')
 def browse_stuff_order_by(type,order_by, order):
 	keys, contents = get_all(type, order_by, order)
 	cols = get_columns(type)
 	types = []
-	for v in cols.values():
+	string_types = []
+	for k,v in cols.items():
 		if 'string' in v:
+			string_types.append(k)
 			types.append(True)
 		else:
 			types.append(False)
 	flash("Viewing " + type.upper() + " ordered by " + order_by.upper() + " in " + order.upper() + " order")
-	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=order_by, order=order, types=types, num_types=len(types))
+	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=order_by, order=order, types=types, num_types=len(types), string_items=string_types)
+
+@app.route('/browse-search/<type>/<col>/<term>')
+def browse_search(type, col, term):
+	keys, contents = get_search(type, col, term)
+	cols = get_columns(type)
+	types = []
+	string_types = []
+	for k,v in cols.items():
+		if 'string' in v:
+			string_types.append(k)
+			types.append(True)
+		else:
+			types.append(False)
+	flash("Viewing " + type.upper())
+	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=None, order=None, types=types, num_types=len(types), string_items=string_types)
 
 @app.route('/create/<type>')
 def create(type):
@@ -192,7 +211,6 @@ def update_redirect(table, update_type):
 	return redirect("/browse/" + table)
 
 def get_all(type, order_by='_na', order='_na'):
-	# TODO: actually interact with the database here
 	statement_text = """SELECT * FROM """ + type
 
 	if not order_by == '_na':
@@ -206,6 +224,21 @@ def get_all(type, order_by='_na', order='_na'):
 		statement_text = statement_text + " ASC";
 
 	statement_text = statement_text  + """;"""
+
+	rows = []
+	with engine.connect() as con:
+		statement = text(statement_text)
+		rs = con.execute(statement)
+
+		for row in rs:
+			rows.append(row)
+
+	header = [x['name'] for x in inspector.get_columns(type)]
+
+	return header, rows
+
+def get_search(type, col, term):
+	statement_text = """SELECT * FROM """ + type + " WHERE " + col + """ LIKE '%""" + term + """%';"""
 
 	rows = []
 	with engine.connect() as con:
@@ -273,28 +306,3 @@ def get_row(type, pk):
 			returned[k] = str(returned[k]).replace(" ", "T")
 
 	return returned
-
-def get_example():
-	#This method is just a placeholder until we actually interface with the DB
-	keys = ['id', 'name', 'a', 'b']
-
-	contents = []
-	contents.append(['1','Example Item 1', 'example a', 'example b'])
-
-	#This commented out bit shows how to interact with the DB
-	#with engine.connect() as con:
-	#	statement = text("""SELECT * FROM example;""")
-	#	rs = con.execute(statement)
-
-	#	for row in rs:
-	#		returned.append(row)
-
-	return keys, contents
-
-# Models
-# This is likely unnecessary for most of what we need to do,
-# but a solid back-end app should probably contain models of the DB tables
-class Example(db.Model):
-	example_id = db.Column(db.Integer, primary_key=True)
-	description = db.Column(db.String(100)) # String is equivalent to VARCHAR
-

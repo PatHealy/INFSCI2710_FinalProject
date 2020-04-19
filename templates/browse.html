@@ -45,6 +45,11 @@
 	function create(){
 		window.location = '/create/' + table;
 	}
+
+	function search_by(k){
+		window.location = '/browse-search/' + table + "/" + k + "/" + document.getElementById("search_term").value;
+	}
+
 </script>
 {% endblock %}
 {% block body %}
@@ -71,6 +76,28 @@ o	Search for common resolutions by product
 		<button id="browse_orders_button" type="button" class="btn btn-primary" onclick="browse_category('orders')">Browse Orders</button>
 		<button id="browse_comments_button" type="button" class="btn btn-primary" onclick="browse_category('comments')">Browse Comments</button>
 		<br/><br/>
+		<!-- Start search bars -->
+		{% if keys != None %}
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<input type="text" class="form-control" id="search_term" placeholder="Search...">
+						<small class="form-text text-muted">Give a search term and we'll search for that term in the column you specify.</small>
+					</div>
+				</div>
+				<div class="col">
+					<div class="dropdown">
+						<button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Search by...
+						<span class="caret"></span></button>
+						<ul class="dropdown-menu">
+							{% for k in string_items %}
+							<li><a href="javascript:search_by('{{k}}')">{{k}}</a></li>
+							{% endfor %}
+						</ul>
+					</div>
+				</div>
+			</div>
+		{% endif %}
 		<!-- Start Table -->
 		{% if keys != None %}
 		<table class="table">
