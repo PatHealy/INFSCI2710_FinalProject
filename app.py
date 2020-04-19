@@ -124,6 +124,10 @@ def update():
 	for k,v in entry.items():
 		if 'string' in cols[k]:
 			statement_text = statement_text + k + """ = '""" + v + """', """
+		elif 'datetime' in cols[k]:
+			statement_text = statement_text + k + """ = '""" + v.replace("T", " ") + """', """
+		elif 'date' in cols[k]:
+			statement_text = statement_text + k + """ = '""" + v + """', """
 		else:
 			statement_text = statement_text + k + """ = """ + v + """, """
 
@@ -224,8 +228,10 @@ def get_columns(type):
 		t = 'string'
 		if 'NUMERIC' in str(c['type']) or 'INTEGER' in str(c['type']):
 			t = 'number'
-
-		#TODO -- handle timestamps and dates
+		elif 'TIMESTAMP' in str(c['type']):
+			t = 'datetime'
+		elif 'DATE' in str(c['type']):
+			t = 'date'
 
 		if c['name'] in get_pks(type):
 			t = t + " static"
@@ -245,6 +251,9 @@ def get_row(type, pk):
 	"Returns a dictionary of a whole row in the form (columnName,value)"
 	pk_name = get_pks(type)[0]
 	header = [x['name'] for x in inspector.get_columns(type)]
+	types = get_columns(type)
+
+	# TODO -- Handle multi-col primary keys
 	statement_text = """SELECT * FROM """ + type + """ WHERE """ + pk_name + """=""" +pk + """;"""
 
 	rows = []
@@ -258,6 +267,10 @@ def get_row(type, pk):
 	returned = {}
 	for i in range(len(header)):
 		returned[header[i]] = rows[0][i]
+
+	for k,v in types.items():
+		if 'datetime' in v:
+			returned[k] = str(returned[k]).replace(" ", "T")
 
 	return returned
 

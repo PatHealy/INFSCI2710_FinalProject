@@ -56,6 +56,12 @@
 					{% elif 'string' in types[k] %}
 						<label for="{{k}}"><em>{{k}}</em>:</label>
 						<textarea id="{{k}}" class="form-control" rows="3" disabled>{{v}}</textarea>
+					{% elif 'date' in types[k] %}
+						<label for="{{k}}"><em>{{k}}</em>:</label>
+						<input class="form-control" type="date" value="{{v}}" id="{{k}}" disabled>
+					{% elif 'datetime' in types[k] %}
+						<label for="{{k}}"><em>{{k}}</em>:</label>
+						<input class="form-control" type="datetime-local" value="{{v}}" id="{{k}}" disabled>
 					{% endif %}
 				{% elif types[k] == 'boolean' %}
 					{% if v %}
@@ -73,6 +79,12 @@
 				{% elif types[k] == 'string' %}
 					<label for="{{k}}"><em>{{k}}</em>:</label>
 					<textarea id="{{k}}" class="form-control" rows="3">{{v}}</textarea>
+				{% elif types[k] == 'date' %}
+					<label for="{{k}}"><em>{{k}}</em>:</label>
+					<input class="form-control" type="date" value="{{v}}" id="{{k}}">
+				{% elif types[k] == 'datetime' %}
+					<label for="{{k}}"><em>{{k}}</em>:</label>
+					<input class="form-control" type="datetime-local" value="{{v}}" id="{{k}}">
 				{% endif %}
 				<br/>
 			{% endfor %}
