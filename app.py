@@ -35,19 +35,33 @@ def home_page():
 
 @app.route('/browse')
 def browse_home():
-	return render_template('browse.html', type='none', keys=None, contents=None, order_by=None, order=None)
+	return render_template('browse.html', table='none', keys=None, contents=None, order_by=None, order=None)
 
 @app.route('/browse/<type>')
 def browse_stuff(type):
 	keys, contents = get_all(type)
+	cols = get_columns(type)
+	types = []
+	for v in cols.values():
+		if 'string' in v:
+			types.append(True)
+		else:
+			types.append(False)
 	flash("Viewing " + type.upper())
-	return render_template('browse.html', type=type, keys=keys, contents=contents, order_by=None, order=None)
+	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=None, order=None, types=types, num_types=len(types))
 
 @app.route('/browse/<type>/<order_by>/<order>')
 def browse_stuff_order_by(type,order_by, order):
 	keys, contents = get_all(type, order_by, order)
+	cols = get_columns(type)
+	types = []
+	for v in cols.values():
+		if 'string' in v:
+			types.append(True)
+		else:
+			types.append(False)
 	flash("Viewing " + type.upper() + " ordered by " + order_by.upper() + " in " + order.upper() + " order")
-	return render_template('browse.html', type=type, keys=keys, contents=contents, order_by=order_by, order=order)
+	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=order_by, order=order, types=types, num_types=len(types))
 
 @app.route('/create/<type>')
 def create(type):
@@ -131,12 +145,46 @@ def update():
 
 	return "Updated"
 
+@app.route('/remove', methods=['POST'])
+def remove():
+	entry = request.json;
+	table_name = entry['table']
+	del entry['table']
+
+	pks = get_pks(table_name)
+	cols = get_columns(table_name)
+
+	pk_pairs = {}
+	for k in pks:
+		pk_pairs[k] = entry[k]
+		del entry[k]
+
+	statement_text = """DELETE FROM """ + table_name + """ WHERE """
+
+	for k,v in pk_pairs.items():
+		if 'string' in cols[k]:
+			statement_text = statement_text + str(k) + """ = '""" + str(v) + """', """
+		else:
+			statement_text = statement_text + str(k) + """ = """ + str(v) + """, """
+
+	statement_text = statement_text[:-2] + """;"""
+
+	print(statement_text)
+
+	with engine.connect() as con:
+		statement = text(statement_text)
+		rs = con.execute(statement)
+
+	return "Deleted"
+
 @app.route('/update/<table>/<update_type>')
 def update_redirect(table, update_type):
 	if update_type == "update":
 		flash("Updated " + table + " entry!")
 	elif update_type == "new":
 		flash("Create new " + table + " entry!")
+	elif update_type == "remove":
+		flash("Removed entry from " + table + "!")
 	return redirect("/browse/" + table)
 
 def get_all(type, order_by='_na', order='_na'):

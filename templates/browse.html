@@ -1,24 +1,49 @@
 {% extends "layout.html" %}
 {% block head %}
 <script type="text/javascript">
-	var type = "{{ type }}";
+	var type = "{{ table }}";
+	var table = type;
 	var order = "{{ order }}";
 	var order_by = "{{ order_by }}";
+	var keys = [{% if not keys == None %} {% for x in keys %} '{{x}}', {% endfor %} {% endif %}];
 
 	function browse_category(cat){
 		window.location = "/browse/" + cat;
 	}
 
 	function reorder(element, order){
-		window.location = '/browse/' + type + "/" + element + "/" + order;
+		window.location = '/browse/' + table + "/" + element + "/" + order;
 	}
 
 	function edit(pk){
-		window.location = '/edit/' + type + "/" + pk;
+		window.location = '/edit/' + table + "/" + pk;
+	}
+
+	function remove(item){
+		var toSend = {};
+		for(var i = 0; i < item.length; i++){
+			toSend[keys[i]] = item[i];
+		}
+		
+		toSend['table'] = "{{table}}";
+
+		console.log(toSend);
+		
+		var xhr = new XMLHttpRequest();
+		var url = "/remove";
+		xhr.open("POST", url, true);
+		xhr.setRequestHeader("Content-type", "application/json");
+		xhr.onreadystatechange = function () { 
+		if (xhr.readyState == 4 && xhr.status == 200) {
+				window.location = "/update/{{table}}/remove";
+			}
+		}
+		var data = JSON.stringify(toSend);
+		xhr.send(data);
 	}
 
 	function create(){
-		window.location = '/create/' + type;
+		window.location = '/create/' + table;
 	}
 </script>
 {% endblock %}
@@ -43,6 +68,8 @@ o	Search for common resolutions by product
 		<button id="browse_employees_button" type="button" class="btn btn-primary" onclick="browse_category('employees')">Browse Employees</button>
 		<button id="browse_cases_button" type="button" class="btn btn-primary" onclick="browse_category('cases')">Browse Cases</button>
 		<button id="browse_resolutions_button" type="button" class="btn btn-primary" onclick="browse_category('resolutions')">Browse Resolutions</button>
+		<button id="browse_orders_button" type="button" class="btn btn-primary" onclick="browse_category('orders')">Browse Orders</button>
+		<button id="browse_comments_button" type="button" class="btn btn-primary" onclick="browse_category('comments')">Browse Comments</button>
 		<br/><br/>
 		<!-- Start Table -->
 		{% if keys != None %}
@@ -56,7 +83,7 @@ o	Search for common resolutions by product
 							{% elif order == 'DESC' %}
 								<button type="button" class="btn btn-link" onclick="reorder('{{key}}', 'ASC')" style="font-size:200%;">v</button>
 							{% else %}
-								<button type="button" class="btn btn-link" onclick="browse_category('{{type}}')" style="font-size:200%;">^</button>
+								<button type="button" class="btn btn-link" onclick="browse_category('{{table}}')" style="font-size:200%;">^</button>
 							{% endif %}
 						</th>
 					{% endfor %}
@@ -69,13 +96,14 @@ o	Search for common resolutions by product
 					<td>{{ v }}</td>
 					{% endfor %}
 					<td><button type="button" class="btn btn-warning" onclick="edit({{ item[0] }})">edit...</button></td>
+					<td><button type="button" class="btn btn-danger" onclick="remove([{% for v in range(num_types) %} {% if types[v] or item[v] == None %} '{{item[v]}}', {% else %} {{item[v]}}, {% endif %}{% endfor %}])">DELETE</button></td>
 				</tr>
 			{% else %}
 				There are no contents...
 			{% endfor %}
 			</tbody>
 		</table>
-		<button type="button" class="btn btn-success" onclick="create()">Add a new entry in {{type}}</button>
+		<button type="button" class="btn btn-success" onclick="create()">Add a new entry in {{table}}</button>
 		{% else %}
 			<h2>Choose a category to continue.</h2>
 		{% endif %}
@@ -104,6 +132,12 @@ o	Search for common resolutions by product
 	} else if (type == "resolutions"){
 		$("#browse_resolutions_button").removeClass("btn-primary");
 		$("#browse_resolutions_button").addClass("btn-secondary");
+	} else if (type == "orders"){
+		$("#browse_orders_button").removeClass("btn-primary");
+		$("#browse_orders_button").addClass("btn-secondary");
+	} else if (type == "comments"){
+		$("#browse_comments_button").removeClass("btn-primary");
+		$("#browse_comments_button").addClass("btn-secondary");
 	}
 </script>
 
