@@ -87,16 +87,31 @@ def update_redirect(table, update_type):
 
 def get_all(type, order_by='_na', order='_na'):
 	# TODO: actually interact with the database here
+	statement_text = """SELECT * FROM """ + type
+
+	if not order_by == '_na':
+		statement_text = statement_text + " ORDER BY " + order_by
+
 	if order == 'DESC':
 		#call query with DESC
-		pass
+		statement_text = statement_text + " DESC";
 	elif order == 'ASC':
 		#call query without DESC
-		pass
-	else:
-		#call query without ordering
-		pass
-	return get_example()
+		statement_text = statement_text + " ASC";
+
+	statement_text = statement_text  + """;"""
+
+	rows = []
+	with engine.connect() as con:
+		statement = text(statement_text)
+		rs = con.execute(statement)
+
+		for row in rs:
+			rows.append(row)
+
+	header = [x['name'] for x in inspector.get_columns(type)]
+
+	return header, rows
 
 def get_columns(type):
 	"Returns a dictionary containing (column name, data type)"
