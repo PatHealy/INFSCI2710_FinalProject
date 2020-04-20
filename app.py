@@ -43,14 +43,20 @@ def browse_stuff(type):
 	cols = get_columns(type)
 	types = []
 	string_types = []
+	datetime_types = []
+	date_types = []
 	for k,v in cols.items():
 		if 'string' in v:
 			string_types.append(k)
 			types.append(True)
 		else:
 			types.append(False)
+		if 'datetime' in v:
+			datetime_types.append(k)
+		elif 'date' in v:
+			date_types.append(k)
 	flash("Viewing " + type.upper())
-	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=None, order=None, types=types, num_types=len(types), string_items=string_types)
+	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=None, order=None, types=types, num_types=len(types), string_items=string_types, datetime_items=datetime_types, date_items=date_types)
 
 @app.route('/browse/<type>/<order_by>/<order>')
 def browse_stuff_order_by(type,order_by, order):
@@ -58,18 +64,47 @@ def browse_stuff_order_by(type,order_by, order):
 	cols = get_columns(type)
 	types = []
 	string_types = []
+	datetime_types = []
+	date_types = []
 	for k,v in cols.items():
 		if 'string' in v:
 			string_types.append(k)
 			types.append(True)
 		else:
 			types.append(False)
+		if 'datetime' in v:
+			datetime_types.append(k)
+		elif 'date' in v:
+			date_types.append(k)
 	flash("Viewing " + type.upper() + " ordered by " + order_by.upper() + " in " + order.upper() + " order")
-	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=order_by, order=order, types=types, num_types=len(types), string_items=string_types)
+	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=order_by, order=order, types=types, num_types=len(types), string_items=string_types, datetime_items=datetime_types, date_items=date_types)
 
 @app.route('/browse-search/<type>/<col>/<term>')
 def browse_search(type, col, term):
 	keys, contents = get_search(type, col, term)
+	cols = get_columns(type)
+	types = []
+	string_types = []
+	datetime_types = []
+	date_types = []
+	for k,v in cols.items():
+		if 'string' in v:
+			string_types.append(k)
+			types.append(True)
+		else:
+			types.append(False)
+		if 'datetime' in v:
+			datetime_types.append(k)
+		elif 'date' in v:
+			date_types.append(k)
+	flash("Viewing " + type.upper() + ", searching " + col.upper() + " for '" + term + "'")
+	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=None, order=None, types=types, num_types=len(types), string_items=string_types, datetime_items=datetime_types, date_items=date_types)
+
+@app.route('/browse-date-range/<type>/<col>/<start>/<end>')
+def browse_date(type, col, start, end):
+	start = start.replace("T", " ")
+	end = end.replace("T", " ")
+	keys, contents = get_date_range(type, col, start, end)
 	cols = get_columns(type)
 	types = []
 	string_types = []
@@ -79,7 +114,7 @@ def browse_search(type, col, term):
 			types.append(True)
 		else:
 			types.append(False)
-	flash("Viewing " + type.upper())
+	flash("Viewing " + type.upper() + ", searching " + col.upper() + " for range " + start + " to " + end)
 	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=None, order=None, types=types, num_types=len(types), string_items=string_types)
 
 @app.route('/create/<type>')
@@ -239,6 +274,21 @@ def get_all(type, order_by='_na', order='_na'):
 
 def get_search(type, col, term):
 	statement_text = """SELECT * FROM """ + type + " WHERE " + col + """ LIKE '%""" + term + """%';"""
+
+	rows = []
+	with engine.connect() as con:
+		statement = text(statement_text)
+		rs = con.execute(statement)
+
+		for row in rs:
+			rows.append(row)
+
+	header = [x['name'] for x in inspector.get_columns(type)]
+
+	return header, rows
+
+def get_date_range(type, col, start_date, end_date):
+	statement_text = """SELECT * FROM """ + type + " WHERE " + col + """ BETWEEN '""" + start_date + """' AND '""" + end_date + "';"
 
 	rows = []
 	with engine.connect() as con:

@@ -50,6 +50,12 @@
 		window.location = '/browse-search/' + table + "/" + k + "/" + document.getElementById("search_term").value;
 	}
 
+	function search_range(k){
+		var startVal = document.getElementById(k + "_start").value;
+		var endVal = document.getElementById(k + "_end").value;
+		window.location = "/browse-date-range/" + table + "/" + k + "/" + startVal + "/" + endVal;
+	}
+
 </script>
 {% endblock %}
 {% block body %}
@@ -87,7 +93,7 @@ o	Search for common resolutions by product
 				</div>
 				<div class="col">
 					<div class="dropdown">
-						<button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Search by...
+						<button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown">Search by...
 						<span class="caret"></span></button>
 						<ul class="dropdown-menu">
 							{% for k in string_items %}
@@ -97,6 +103,33 @@ o	Search for common resolutions by product
 					</div>
 				</div>
 			</div>
+			<br/><br/>
+			{% for k in date_items %}
+				<div class="row">
+					<div class="col">
+						<p>Search date ranges of {{k}}</p>
+						<label for="{{k}}_start"><em>Range Start</em>:</label>
+						<input class="form-control" type="date" id="{{k}}_start" value="2020-04-01">
+						<label for="{{k}}_end"><em>Range End</em>:</label>
+						<input class="form-control" type="date" id="{{k}}_end" value="2020-04-01">
+					</div>
+				</div>
+				<button type="button" class="btn btn-info" onclick="search_range('{{k}}')">Search Range</button>
+				<br/><br/><br/>
+			{% endfor %}
+			{% for k in datetime_items %}
+				<div class="row">
+					<div class="col">
+						<p>Search datetime ranges of {{k}}</p>
+						<label for="{{k}}_start"><em>Range Start</em>:</label>
+						<input class="form-control" type="datetime-local" id="{{k}}_start" value="2020-04-01T00:00">
+						<label for="{{k}}_end"><em>Range End</em>:</label>
+						<input class="form-control" type="datetime-local" id="{{k}}_end" value="2020-04-01T00:00">
+					</div>
+				</div>
+				<button type="button" class="btn btn-info" onclick="search_range('{{k}}')">Search Range</button>
+				<br/><br/><br/>
+			{% endfor %}
 		{% endif %}
 		<!-- Start Table -->
 		{% if keys != None %}
