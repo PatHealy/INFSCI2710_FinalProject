@@ -2,6 +2,7 @@
 {% block head %}
 <script type="text/javascript">
 	var col_names = [{% for k in types.keys() %} "{{k}}", {% endfor %}];
+	var col_types = [{% for k in types.values() %} "{{k}}", {% endfor %}];
 
 	function submit_new(){
 		//TODO: put all the stuff in a JSON object and POST it to /update
@@ -13,6 +14,12 @@
 				var k = col_names[i];
 				if(v == 'on'){
 					v = elem.checked;
+				}
+				if(col_types[i].includes("date")){
+					v = "'" + v + "'";
+				}
+				if(col_types[i].includes("datetime")){
+					v = v.replace("T", " ");
 				}
 				toSend[k] = v;
 			}
@@ -41,18 +48,24 @@
 	<div class="card-body">
 		<form class="form-group">
 			{% for k, v in types.items() %}
-				{% if 'static' in v %}
+				{% if 'static' in v and not table == "orders" %}
 					<em>{{k}}</em>: Uneditedable
 				{% elif v == 'boolean' %}
 					<label for="{{k}}"><em>{{k}}</em>:</label>
 					&emsp; &emsp; 
 					<input id="{{k}}" type="checkbox" class="form-check-input">
-				{% elif v == 'number' %}
+				{% elif 'number' in v %}
 					<label for="{{k}}"><em>{{k}}</em>:</label>
 					<input id="{{k}}" class="form-control" type="number">
 				{% elif v == 'string' %}
 					<label for="{{k}}"><em>{{k}}</em>:</label>
 					<textarea id="{{k}}" class="form-control" rows="3"></textarea>
+				{% elif v == 'datetime'%}
+					<label for="{{k}}"><em>{{k}}</em>:</label>
+					<input class="form-control" type="datetime-local" id="{{k}}" value="2020-04-01T00:00">
+				{% elif v == 'date' %}
+					<label for="{{k}}"><em>{{k}}</em>:</label>
+					<input class="form-control" type="date" id="{{k}}" value="2020-04-01">
 				{% endif %}
 				<br/>
 			{% endfor %}

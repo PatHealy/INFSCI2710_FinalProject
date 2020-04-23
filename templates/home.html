@@ -8,12 +8,31 @@
 	<p>As a busy help-desk operator, we assume you will want to get to these operations the most quickly:</p>
 	<ul>
 		<li>
-			Todo
+			<a href="/browse?table=cases">Search through cases by status and timeframe</a>. Use the search bar that will appear at the top of the screen.
+		</li>
+		<li>
+			<a href="/browse?table=customers">Search for a customer and view products the customer has purchased</a>. Use the search bar at the top of the screen and then click the appropriate button at the right side of the row to view those products.
+		</li>
+		<li>
+			<a href="/browse?table=products">Search for common resolutions by product</a>. Search for a product and click the appropriate button on the right side of the row.
+		</li>
+		<li>
+			<a href="/create/cases">Create a new case</a>
+		</li>
+		<li>
+			<a href="/browse?table=cases">Update an existing case (including closing the case)</a>. Search for the case and click 'edit'.
+		</li>
+		<li>
+			<a href="/create/orders">Add a new sale</a> or <a href="/create/customers">add a new customer</a>.
+		</li>
+		<li>
+			<a href="/browse?table=customers">Update a customer</a>. Search for the customer and then click the 'edit' button on the right of the row.
 		</li>
 	</ul>
 	<br/>
 	<h4>Browsing!</h4>
-	<p>Most browse operations can be handled on the <a href="/browse">browse page</a></p>. The browse page allows you to...
+	<p>Most browse operations can be handled on the <a href="/browse">browse page</a>.</p> The browse page allows you to...
+	<br/>
 	<ul>
 		<li>
 			<p>Casually browse any table of the database</p>
@@ -37,24 +56,6 @@
 
 {% endblock %}
 
-<!--
-Support cases by product (ordered by largest)
-	SELECT product.p_name, count(*) FROM cases, product WHERE cases.product_id=product.product_id GROUP BY product_id ORDER BY count(*) DESC;
--->
 
-<!--
-Support cases closed by employee (ordered by largest)
-	SELECT employee.name, count(*) from cases, employee WHERE cases.employee_id=employee.employee_id AND cases.status='Closed' GROUP BY employee.employee_id ORDER BY count(*) DESC;
--->
 
-<!--
-Support cases by customer (ordered by largest)
-	SELECT customer.name, count(*) from cases, customers WHERE cases.customer_id=customer.customer_id GROUP BY customer.customer_id ORDER BY count(*) DESC;
 
--->
-
-<!--
-Support cases by customer’s company(ordered by largest)
-	SELECT * FROM customers, cases WHERE customers.customer_id=customers.customer_id GROUP BY customers.company ORDER BY count(*) DESC;
-
--->

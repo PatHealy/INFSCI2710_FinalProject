@@ -1,11 +1,11 @@
-drop table Comments;
-drop table Cases;
-drop table Resolutions;
-drop table Salespersons;
-drop table Employees;
-drop table Orders;
-drop table Customers;
-drop table Products;
+drop table Comments CASCADE;
+drop table Cases CASCADE;
+drop table Resolutions CASCADE;
+drop table Salespersons CASCADE;
+drop table Employees CASCADE;
+drop table Orders CASCADE;
+drop table Customers CASCADE;
+drop table Products CASCADE;
 
 create table Products (
     product_id serial,

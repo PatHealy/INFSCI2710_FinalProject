@@ -57,7 +57,7 @@ def browse_query():
 
 	flash(get_flash_string(table, where, order))
 
-	return render_template('browse.html', table=table, where=where, order=order, keys=keys, contents=contents, types=types, num_types=num_types, string_items=string_types, datetime_items=datetime_types, date_items=date_types, pks=pks, fks=fks, col_types=col_types, references=references, joins=joins, double_join=False, editable=editable)
+	return render_template('browse.html', table=table, where=where, order=order, keys=keys, contents=contents, types=types, num_types=num_types, string_items=string_types, datetime_types=datetime_types, date_types=date_types, pks=pks, fks=fks, col_types=col_types, references=references, joins=joins, double_join=False, editable=editable)
 
 @app.route('/browse/double-join')
 def browse_double_join():
@@ -68,7 +68,6 @@ def browse_double_join():
 	join23 = request.args.get('join23')
 	message = request.args.get('message')
 	keys, contents = get_double_join(table1pkName, table1pk, table2, table3, join23)
-	print(keys)
 
 	flash(message)
 	return render_template('browse.html', keys=keys, contents=contents, table=None, where=None, order=None, types=None, num_types=None, string_items=None, datetime_items=None, date_items=None, pks=None, fks=None, col_types=None, references=None, joins=None, double_join=True, editable=False)
@@ -101,7 +100,7 @@ def create_new_entry():
 
 	statement_text = statement_text[:-2] + """);"""
 
-	print(statement_text)
+	#print(statement_text)
 
 	with engine.connect() as con:
 		statement = text(statement_text)
@@ -156,7 +155,7 @@ def update():
 
 	statement_text = statement_text[:-2] + """;"""
 
-	print(statement_text)
+	#print(statement_text)
 
 	with engine.connect() as con:
 		statement = text(statement_text)
@@ -188,7 +187,7 @@ def remove():
 
 	statement_text = statement_text[:-2] + """;"""
 
-	print(statement_text)
+	#print(statement_text)
 
 	with engine.connect() as con:
 		statement = text(statement_text)
@@ -210,11 +209,10 @@ def update_redirect(table, update_type):
 def aggregation():
 	queries = [
 		"""SELECT products.p_name, count(*) FROM cases, products WHERE cases.product_id=products.product_id GROUP BY products.product_id ORDER BY count(*) DESC;""",
-		"""SELECT employees.e_first, employees.e_last, count(*) from cases, employees WHERE cases.employee_id=employees.employee_id AND cases.c_status='Closed' GROUP BY employees.employee_id ORDER BY count(*) DESC;"""]
-	#,
-	"""SELECT customers.c_first, customers.c_last, count(*) from cases, customers WHERE cases.customer_id=customers.customer_id GROUP BY customers.customer_id ORDER BY count(*) DESC;""",
-	"""SELECT customers.c_company, count(*) FROM customers, cases WHERE customers.customer_id=customers.customer_id GROUP BY customers.c_company ORDER BY count(*) DESC;"""
-	#]
+		"""SELECT employees.e_first, employees.e_last, count(*) from cases, employees WHERE cases.employee_id=employees.employee_id AND cases.c_status='Closed' GROUP BY employees.employee_id ORDER BY count(*) DESC;""",
+		"""SELECT customers.c_first, customers.c_last, count(*) from cases, customers WHERE cases.customer_id=customers.customer_id GROUP BY customers.customer_id ORDER BY count(*) DESC;""",
+		"""SELECT customers.c_company, count(*) FROM customers, cases WHERE customers.customer_id=customers.customer_id GROUP BY customers.c_company ORDER BY count(*) DESC;"""
+	]
 
 	rows_returned = []
 	with engine.connect() as con:
@@ -371,9 +369,13 @@ def get_types(cols):
 		else:
 			types.append(False)
 		if 'datetime' in v:
-			datetime_types.append(k)
-		elif 'date' in v:
-			date_types.append(k)
+			datetime_types.append(True)
+		else:
+			datetime_types.append(False)
+		if 'date' in v:
+			date_types.append(True)
+		else:
+			date_types.append(False)
 
 	return types, string_types, datetime_types, date_types, len(types)
 
@@ -406,7 +408,6 @@ def clean_queries(table,where,order):
 	if order == "null":
 		order = None
 	elif order != None:
-		print(order)
 		order = json.loads(order)
 
 	return table, where, order
@@ -419,7 +420,7 @@ def get_references(table):
 		'employees':[['salesperson title for this employee', 'salespersons'], ['cases assigned to this employee', 'cases']],
 		'products': [['cases involving this product', 'cases'], ['orders including this product', 'orders']],
 		'resolutions': [['cases using this resolution', 'cases']],
-		'customers': [['orders by this customer', 'orders']],
+		'customers': [['orders by this customer', 'orders'], ['cases involving this customer', 'cases']],
 		'cases': [['comments on this case', 'comments']],
 		'salespersons': None,
 		'orders': None,
