@@ -51,10 +51,11 @@ def browse_query():
 	types, string_types, datetime_types, date_types, num_types = get_types(cols)
 	pks = get_pks(table)
 	fks = get_fks(table)
+	references = get_references(table)
 
 	flash(get_flash_string(table, where, order))
 
-	return render_template('browse.html', table=table, where=where, order=order, keys=keys, contents=contents, types=types, num_types=num_types, string_items=string_types, datetime_items=datetime_types, date_items=date_types, pks=pks, fks=fks, col_types=col_types)
+	return render_template('browse.html', table=table, where=where, order=order, keys=keys, contents=contents, types=types, num_types=num_types, string_items=string_types, datetime_items=datetime_types, date_items=date_types, pks=pks, fks=fks, col_types=col_types, references=references)
 
 @app.route('/create/<type>')
 def create(type):
@@ -353,3 +354,18 @@ def clean_queries(table,where,order):
 		order = json.loads(order)
 
 	return table, where, order
+
+def get_references(table):
+	"Returns a dictionary representing what other tables reference this one"
+	if table == None:
+		return None
+	return { 
+		'employees':[['salesperson title for this employee', 'salespersons'], ['cases assigned to this employee', 'cases']],
+		'products': [['cases involving this product', 'cases'], ['orders including this product', 'orders']],
+		'resolutions': [['cases using this resolution', 'cases']],
+		'customers': [['orders by this customer', 'orders']],
+		'cases': [['comments on this case', 'comments']],
+		'salespersons': None,
+		'orders': None,
+		'comments':None
+	}[table]

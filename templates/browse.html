@@ -154,6 +154,15 @@
 		operator.selectedIndex = 0;
 	}
 
+	function searchReference(otherTable, val){
+		var pk = '{{pks[0]}}';
+		table = otherTable;
+		order = null;
+		var stringVal = "" + val;
+		where = [[pk, '=', stringVal]];
+		reload_browse();
+	}
+
 </script>
 {% endblock %}
 {% block body %}
@@ -246,6 +255,11 @@ o	Search for common resolutions by product
 							<td>{{ item[k] }}</td>
 						{% endif %}
 					{% endfor %}
+					{% if not references == None %}
+						{% for row in references %}
+							<td><button type="button" class="btn btn-info" onclick="searchReference('{{row[1]}}', {{item[0]}})">Browse {{row[0]}}</button></td>
+						{% endfor %}
+					{% endif %}
 					<td><button type="button" class="btn btn-warning" onclick="edit({{ item[0] }})">edit...</button></td>
 					<td><button type="button" class="btn btn-danger" onclick="remove([{% for v in range(num_types) %} {% if types[v] or item[v] == None %} '{{item[v]}}', {% else %} {{item[v]}}, {% endif %}{% endfor %}])">DELETE</button></td>
 				</tr>
