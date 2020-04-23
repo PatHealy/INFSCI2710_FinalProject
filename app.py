@@ -34,88 +34,27 @@ def home_page():
 	return render_template('home.html')
 
 @app.route('/browse')
-def browse_home():
-	return render_template('browse.html', table='none', keys=None, contents=None, order_by=None, order=None)
+def browse_query():
+	# table: simple string representing table
+	# where: list of tuples (column, operator, value)
+	# order: tuple (order by, order)
+	table, where, order = clean_queries(request.args.get('table'), request.args.get('where'), request.args.get('order'))
 
-@app.route('/browse/<type>')
-def browse_stuff(type):
-	keys, contents = get_all(type)
-	cols = get_columns(type)
-	types = []
-	string_types = []
-	datetime_types = []
-	date_types = []
-	for k,v in cols.items():
-		if 'string' in v:
-			string_types.append(k)
-			types.append(True)
-		else:
-			types.append(False)
-		if 'datetime' in v:
-			datetime_types.append(k)
-		elif 'date' in v:
-			date_types.append(k)
-	flash("Viewing " + type.upper())
-	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=None, order=None, types=types, num_types=len(types), string_items=string_types, datetime_items=datetime_types, date_items=date_types)
+	# run the query based on the specifications in the query string
+	# keys contains column names, contents is rows
+	keys, contents = get_query(table, where, order)
+	# dictionary containing data types
+	cols = get_columns(table)
+	col_types = None
+	if cols != None:
+		col_types = cols.values()
+	types, string_types, datetime_types, date_types, num_types = get_types(cols)
+	pks = get_pks(table)
+	fks = get_fks(table)
 
-@app.route('/browse/<type>/<order_by>/<order>')
-def browse_stuff_order_by(type,order_by, order):
-	keys, contents = get_all(type, order_by, order)
-	cols = get_columns(type)
-	types = []
-	string_types = []
-	datetime_types = []
-	date_types = []
-	for k,v in cols.items():
-		if 'string' in v:
-			string_types.append(k)
-			types.append(True)
-		else:
-			types.append(False)
-		if 'datetime' in v:
-			datetime_types.append(k)
-		elif 'date' in v:
-			date_types.append(k)
-	flash("Viewing " + type.upper() + " ordered by " + order_by.upper() + " in " + order.upper() + " order")
-	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=order_by, order=order, types=types, num_types=len(types), string_items=string_types, datetime_items=datetime_types, date_items=date_types)
+	flash(get_flash_string(table, where, order))
 
-@app.route('/browse-search/<type>/<col>/<term>')
-def browse_search(type, col, term):
-	keys, contents = get_search(type, col, term)
-	cols = get_columns(type)
-	types = []
-	string_types = []
-	datetime_types = []
-	date_types = []
-	for k,v in cols.items():
-		if 'string' in v:
-			string_types.append(k)
-			types.append(True)
-		else:
-			types.append(False)
-		if 'datetime' in v:
-			datetime_types.append(k)
-		elif 'date' in v:
-			date_types.append(k)
-	flash("Viewing " + type.upper() + ", searching " + col.upper() + " for '" + term + "'")
-	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=None, order=None, types=types, num_types=len(types), string_items=string_types, datetime_items=datetime_types, date_items=date_types)
-
-@app.route('/browse-date-range/<type>/<col>/<start>/<end>')
-def browse_date(type, col, start, end):
-	start = start.replace("T", " ")
-	end = end.replace("T", " ")
-	keys, contents = get_date_range(type, col, start, end)
-	cols = get_columns(type)
-	types = []
-	string_types = []
-	for k,v in cols.items():
-		if 'string' in v:
-			string_types.append(k)
-			types.append(True)
-		else:
-			types.append(False)
-	flash("Viewing " + type.upper() + ", searching " + col.upper() + " for range " + start + " to " + end)
-	return render_template('browse.html', table=type, keys=keys, contents=contents, order_by=None, order=None, types=types, num_types=len(types), string_items=string_types)
+	return render_template('browse.html', table=table, where=where, order=order, keys=keys, contents=contents, types=types, num_types=num_types, string_items=string_types, datetime_items=datetime_types, date_items=date_types, pks=pks, fks=fks, col_types=col_types)
 
 @app.route('/create/<type>')
 def create(type):
@@ -158,6 +97,11 @@ def edit(type, pk):
 	content = get_row(type, pk)
 	types = get_columns(type)
 	return render_template('edit.html', table=type, primary_key=pk, content=content, types=types)
+
+@app.route('/view/<type>/<pk>')
+def view(type, pk):
+	content = get_row(type, pk)
+	return render_template('view.html', table=type, primary_key=pk, content=content)
 
 @app.route('/update', methods=['POST'])
 def update():
@@ -245,50 +189,36 @@ def update_redirect(table, update_type):
 		flash("Removed entry from " + table + "!")
 	return redirect("/browse/" + table)
 
-def get_all(type, order_by='_na', order='_na'):
-	statement_text = """SELECT * FROM """ + type
+def processT1(t1):
+	t1 = t1.replace("&gt;", ">")
+	t1 = t1.replace("&lt;", "<")
+	return t1
 
-	if not order_by == '_na':
-		statement_text = statement_text + " ORDER BY " + order_by
+def get_query(table, where, order):
+	if table == None:
+		return None, None
 
-	if order == 'DESC':
-		#call query with DESC
-		statement_text = statement_text + " DESC";
-	elif order == 'ASC':
-		#call query without DESC
-		statement_text = statement_text + " ASC";
+	statement_text = "SELECT * FROM " + table
 
-	statement_text = statement_text  + """;"""
+	if where != None and len(where) > 0:
+		statement_text = statement_text + " WHERE "
+		for t in where:
+			search_string = t[2]
+			operator = t[1]
+			if t[1] == "contains":
+				operator = " LIKE "
+				search_string = " '%" + t[2] + "%'"
+			else:
+				t[1] = processT1(t[1])
+				operator = t[1]
 
-	rows = []
-	with engine.connect() as con:
-		statement = text(statement_text)
-		rs = con.execute(statement)
+			statement_text = statement_text + t[0] + operator + search_string + " AND "
+		statement_text = statement_text[:-5]
 
-		for row in rs:
-			rows.append(row)
+	if order != None and len(order) > 0:
+		statement_text = statement_text + " ORDER BY " + order[0] + " " + order[1]
 
-	header = [x['name'] for x in inspector.get_columns(type)]
-
-	return header, rows
-
-def get_search(type, col, term):
-	statement_text = """SELECT * FROM """ + type + " WHERE " + col + """ LIKE '%""" + term + """%';"""
-
-	rows = []
-	with engine.connect() as con:
-		statement = text(statement_text)
-		rs = con.execute(statement)
-
-		for row in rs:
-			rows.append(row)
-
-	header = [x['name'] for x in inspector.get_columns(type)]
-
-	return header, rows
-
-def get_date_range(type, col, start_date, end_date):
-	statement_text = """SELECT * FROM """ + type + " WHERE " + col + """ BETWEEN '""" + start_date + """' AND '""" + end_date + "';"
+	statement_text = statement_text + ";"
 
 	rows = []
 	with engine.connect() as con:
@@ -298,13 +228,15 @@ def get_date_range(type, col, start_date, end_date):
 		for row in rs:
 			rows.append(row)
 
-	header = [x['name'] for x in inspector.get_columns(type)]
+	header = [x['name'] for x in inspector.get_columns(table)]
 
 	return header, rows
 
 def get_columns(type):
 	"Returns a dictionary containing (column name, data type)"
 	#Data type can be number, string, or boolean. Also may include the word static, if they should not be editable (such as in primary keys)
+	if type == None:
+		return None
 	returned = {}
 	cols = inspector.get_columns(type)
 	for c in cols:
@@ -328,7 +260,18 @@ def get_columns(type):
 
 def get_pks(table):
 	"Returns a list of primary keys of the given table"
+	if table == None:
+		return None
 	return inspector.get_pk_constraint(table)['constrained_columns']
+
+def get_fks(table):
+	"Returns a dictionary of column_name:other_table, representing the FK relationships"
+	if table == None:
+		return None
+	fks = {}
+	for full in inspector.get_foreign_keys(table):
+		fks[full['constrained_columns'][0]] = full['referred_table']
+	return fks
 
 def get_row(type, pk):
 	"Returns a dictionary of a whole row in the form (columnName,value)"
@@ -356,3 +299,57 @@ def get_row(type, pk):
 			returned[k] = str(returned[k]).replace(" ", "T")
 
 	return returned
+
+def get_types(cols):
+	if cols == None:
+		return None, None, None, None, None
+	types = []
+	string_types = []
+	datetime_types = []
+	date_types = []
+	for k,v in cols.items():
+		if 'string' in v:
+			string_types.append(k)
+			types.append(True)
+		else:
+			types.append(False)
+		if 'datetime' in v:
+			datetime_types.append(k)
+		elif 'date' in v:
+			date_types.append(k)
+
+	return types, string_types, datetime_types, date_types, len(types)
+
+def get_flash_string(table, where, order):
+	if table == None:
+		return ""
+	temp = "Browsing " + table.upper() + " items"
+
+	if where != None and len(where) > 0:
+		temp = temp + " where " 
+		for t in where:
+			temp = temp + t[0].upper() + " " + t[1] + " " + t[2] + " and "
+		temp = temp[:-4]
+
+	if order != None and len(order) > 0:
+		if order[1] == 'DESC':
+			temp = temp + " in DESCENDING order by " + order[0]
+		else:
+			temp = temp + " in ASCENDING order by " + order[0]
+
+	return temp + "."
+
+def clean_queries(table,where,order):
+	if table == "null":
+		table = None
+	if where == "null":
+		where = None
+	elif where != None:
+		where = json.loads(where)
+	if order == "null":
+		order = None
+	elif order != None:
+		print(order)
+		order = json.loads(order)
+
+	return table, where, order

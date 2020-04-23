@@ -1,18 +1,34 @@
 {% extends "layout.html" %}
 {% block head %}
 <script type="text/javascript">
+	var None = null;
 	var type = "{{ table }}";
+	if(type == "None"){ type = null; }
+	var where = [{% if not where == None %} {% for row in where %} [{% for col in row %} '{{col}}', {% endfor %}],{% endfor %} {% endif %}];
+	var order = [{% if not order == None %} {% for o in order %} '{{o}}', {% endfor %} {% endif %}];
 	var table = type;
-	var order = "{{ order }}";
-	var order_by = "{{ order_by }}";
 	var keys = [{% if not keys == None %} {% for x in keys %} '{{x}}', {% endfor %} {% endif %}];
+	var types = [{% if not keys == None %} {% for x in col_types %} '{{x}}', {% endfor %} {% endif %}];
+	var searchType = "";
 
 	function browse_category(cat){
-		window.location = "/browse/" + cat;
+		table = cat;
+		where = null;
+		order = null;
+		reload_browse();
 	}
 
-	function reorder(element, order){
-		window.location = '/browse/' + table + "/" + element + "/" + order;
+	function reorder(element){
+		if(order != null && order[0] == element){
+			if(order[1] == "ASC"){
+				order[1] = "DESC";
+			} else {
+				order = null;
+			}
+		} else {
+			order = [element, "ASC"];
+		}
+		reload_browse();
 	}
 
 	function edit(pk){
@@ -46,14 +62,96 @@
 		window.location = '/create/' + table;
 	}
 
-	function search_by(k){
-		window.location = '/browse-search/' + table + "/" + k + "/" + document.getElementById("search_term").value;
-	}
-
 	function search_range(k){
 		var startVal = document.getElementById(k + "_start").value;
 		var endVal = document.getElementById(k + "_end").value;
 		window.location = "/browse-date-range/" + table + "/" + k + "/" + startVal + "/" + endVal;
+	}
+
+	function reload_browse(){
+		const params = new URLSearchParams(location.search);
+		params.set('table', table);
+		params.set('where', JSON.stringify(where));
+		params.set('order', JSON.stringify(order));
+
+		window.location = `${location.pathname}?${params.toString()}`;
+	}
+
+	function submitSearch(){
+		if(where == null){
+			where = new Array();
+		}
+		var col = document.getElementById("searchCol").value;
+		var operator = document.getElementById("searchOperator").value;
+		var searchTerm = document.getElementById("search_term").value;
+
+		if(searchType.includes("date")){
+			searchTerm = "'" + searchTerm + "'";
+		}
+
+		if(searchType == "datetime"){
+			searchTerm.replace("T", " ");
+		}
+
+		var thisSearch = [col, operator, searchTerm];
+		where[where.length] = thisSearch;
+		//console.log(JSON.stringify(where));
+		reload_browse();
+	}
+
+	function updateSearchType(){
+		var columnSelect = document.getElementById("searchCol").value;
+		var i = 0;
+		while(keys[i] != columnSelect){
+			i++;
+		}
+
+		var columnType = types[i];
+		var searchTerm = document.getElementById("search_term");
+		var operator = document.getElementById("searchOperator");
+
+		while(operator.options.length > 0){
+			operator.options.remove(0);
+		}
+		var option1 = document.createElement("OPTION");
+		var option2 = document.createElement("OPTION");
+		var option3 = document.createElement("OPTION");
+		var option4 = document.createElement("OPTION");
+		var option5 = document.createElement("OPTION");
+		var option6 = document.createElement("OPTION");
+
+		if (columnType.includes("number") || columnType.includes("date")){
+			option1.appendChild(document.createTextNode(">"));
+			option2.appendChild(document.createTextNode("<"));
+			option3.appendChild(document.createTextNode("="));
+			option4.appendChild(document.createTextNode("<="));
+			option5.appendChild(document.createTextNode(">="));
+			option6.appendChild(document.createTextNode("!="));
+			operator.options.add(option1);
+			operator.options.add(option2);
+			operator.options.add(option3);
+			operator.options.add(option4);
+			operator.options.add(option5);
+			operator.options.add(option6);
+		}
+
+		if(columnType.includes("number")){
+			searchTerm.type = "number";
+			searchType = "number";
+		} else if (columnType.includes("string")){
+			searchTerm.type = "text";
+			option1.appendChild(document.createTextNode("contains"));
+			operator.options.add(option1);
+			searchType = "string";
+		} else if (columnType.includes("datetime")){
+			searchTerm.type = "datetime-local";
+			searchType = "datetime";
+		} else if (columnType.includes("date")){
+			searchTerm.type = "date";
+			searchType = "date";
+		}
+
+		operator.selectedIndex = 0;
 	}
 
 </script>
@@ -84,53 +182,36 @@ o	Search for common resolutions by product
 		<br/><br/>
 		<!-- Start search bars -->
 		{% if keys != None %}
+		<h3>Search...</h3>
 			<div class="row">
 				<div class="col">
+					<select class="form-control" id="searchCol" onchange="updateSearchType()">
+						{% for k in keys %}
+						<option>{{k}}</option>
+						{% endfor %}
+					</select>
+				</div>
+				<div class="col">
+					<select class="form-control" id="searchOperator">
+						<option>=</option>
+						<option><</option>
+						<option>></option>
+						<option>contains</option>
+					</select>
+				</div>
+				<div class="col">
 					<div class="form-group">
-						<input type="text" class="form-control" id="search_term" placeholder="Search...">
-						<small class="form-text text-muted">Give a search term and we'll search for that term in the column you specify.</small>
+						<input type="text" class="form-control" id="search_term" placeholder="value...">
+						<small class="form-text text-muted">Choose a column, an operator, and a search term.</small>
 					</div>
 				</div>
 				<div class="col">
-					<div class="dropdown">
-						<button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown">Search by...
-						<span class="caret"></span></button>
-						<ul class="dropdown-menu">
-							{% for k in string_items %}
-							<li><a href="javascript:search_by('{{k}}')">{{k}}</a></li>
-							{% endfor %}
-						</ul>
-					</div>
+					<button id="searchButton" type="button" class="btn btn-info" onclick="submitSearch()">Search!</button>
 				</div>
 			</div>
 			<br/><br/>
-			{% for k in date_items %}
-				<div class="row">
-					<div class="col">
-						<p>Search date ranges of {{k}}</p>
-						<label for="{{k}}_start"><em>Range Start</em>:</label>
-						<input class="form-control" type="date" id="{{k}}_start" value="2020-04-01">
-						<label for="{{k}}_end"><em>Range End</em>:</label>
-						<input class="form-control" type="date" id="{{k}}_end" value="2020-04-01">
-					</div>
-				</div>
-				<button type="button" class="btn btn-info" onclick="search_range('{{k}}')">Search Range</button>
-				<br/><br/><br/>
-			{% endfor %}
-			{% for k in datetime_items %}
-				<div class="row">
-					<div class="col">
-						<p>Search datetime ranges of {{k}}</p>
-						<label for="{{k}}_start"><em>Range Start</em>:</label>
-						<input class="form-control" type="datetime-local" id="{{k}}_start" value="2020-04-01T00:00">
-						<label for="{{k}}_end"><em>Range End</em>:</label>
-						<input class="form-control" type="datetime-local" id="{{k}}_end" value="2020-04-01T00:00">
-					</div>
-				</div>
-				<button type="button" class="btn btn-info" onclick="search_range('{{k}}')">Search Range</button>
-				<br/><br/><br/>
-			{% endfor %}
 		{% endif %}
+
 		<!-- Start Table -->
 		{% if keys != None %}
 		<table class="table">
@@ -138,13 +219,15 @@ o	Search for common resolutions by product
 				<tr>
 					{% for key in keys %}
 						<th scope="col">{{ key }} 
-							{% if key != order_by %}
-								<button type="button" class="btn btn-link" onclick="reorder('{{key}}', 'DESC')" style="font-size:200%;">-</button>
-							{% elif order == 'DESC' %}
-								<button type="button" class="btn btn-link" onclick="reorder('{{key}}', 'ASC')" style="font-size:200%;">v</button>
+							<button type="button" class="btn btn-link" onclick="reorder('{{key}}')" style="font-size:200%;">
+							{% if order[0] == key and order[1] == "ASC" %}
+								^
+							{% elif order[0] == key and order[1] == "DESC" %}
+								v
 							{% else %}
-								<button type="button" class="btn btn-link" onclick="browse_category('{{table}}')" style="font-size:200%;">^</button>
+								-
 							{% endif %}
+							</button>
 						</th>
 					{% endfor %}
 				</tr>
@@ -152,8 +235,16 @@ o	Search for common resolutions by product
 			<tbody>
 			{% for item in contents %}
 				<tr>
-					{% for v in item %}
-					<td>{{ v }}</td>
+					{% for k in range(num_types) %}
+						{% if item[k] == None %}
+							<td>{{ item[k] }}</td>
+						{% elif keys[k] in fks.keys() %}
+							<td><a href="/view/{{fks[keys[k]]}}/{{item[k]}}" >{{ item[k] }}</a></td>
+						{% elif keys[k] in pks %}
+							<td><a href="/view/{{table}}/{{item[k]}}" >{{ item[k] }}</a></td>
+						{% else %}
+							<td>{{ item[k] }}</td>
+						{% endif %}
 					{% endfor %}
 					<td><button type="button" class="btn btn-warning" onclick="edit({{ item[0] }})">edit...</button></td>
 					<td><button type="button" class="btn btn-danger" onclick="remove([{% for v in range(num_types) %} {% if types[v] or item[v] == None %} '{{item[v]}}', {% else %} {{item[v]}}, {% endif %}{% endfor %}])">DELETE</button></td>
@@ -199,6 +290,7 @@ o	Search for common resolutions by product
 		$("#browse_comments_button").removeClass("btn-primary");
 		$("#browse_comments_button").addClass("btn-secondary");
 	}
+	updateSearchType();
 </script>
 
 {% endblock %}
