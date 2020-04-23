@@ -211,7 +211,7 @@ def aggregation():
 		"""SELECT products.p_name, count(*) FROM cases, products WHERE cases.product_id=products.product_id GROUP BY products.product_id ORDER BY count(*) DESC;""",
 		"""SELECT employees.e_first, employees.e_last, count(*) from cases, employees WHERE cases.employee_id=employees.employee_id AND cases.c_status='Closed' GROUP BY employees.employee_id ORDER BY count(*) DESC;""",
 		"""SELECT customers.c_first, customers.c_last, count(*) from cases, customers WHERE cases.customer_id=customers.customer_id GROUP BY customers.customer_id ORDER BY count(*) DESC;""",
-		"""SELECT customers.c_company, count(*) FROM customers, cases WHERE customers.customer_id=customers.customer_id GROUP BY customers.c_company ORDER BY count(*) DESC;"""
+		"""SELECT customers.c_company, count(*) FROM customers, cases WHERE customers.customer_id=cases.customer_id GROUP BY customers.c_company ORDER BY count(*) DESC;"""
 	]
 
 	rows_returned = []

@@ -24,7 +24,7 @@ CREATE OR REPLACE FUNCTION delete_record()
 RETURNS trigger AS
 $BODY$
 BEGIN
-	IF NEW.resolution_id == 5 THEN
+	IF NEW.resolution_id = 5 THEN
 		DELETE FROM orders WHERE customer_id = old.customer_id and product_id = old.product_id;
 	END IF;
 	RETURN NEW;
