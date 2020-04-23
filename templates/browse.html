@@ -6,9 +6,10 @@
 	if(type == "None"){ type = null; }
 	var where = [{% if not where == None %} {% for row in where %} [{% for col in row %} '{{col}}', {% endfor %}],{% endfor %} {% endif %}];
 	var order = [{% if not order == None %} {% for o in order %} '{{o}}', {% endfor %} {% endif %}];
+	var join = [{% if not join == None %} {% for o in join %} '{{o}}', {% endfor %} {% endif %}];
 	var table = type;
 	var keys = [{% if not keys == None %} {% for x in keys %} '{{x}}', {% endfor %} {% endif %}];
-	var types = [{% if not keys == None %} {% for x in col_types %} '{{x}}', {% endfor %} {% endif %}];
+	var types = [{% if not col_types == None %} {% for x in col_types %} '{{x}}', {% endfor %} {% endif %}];
 	var searchType = "";
 
 	function browse_category(cat){
@@ -155,12 +156,30 @@
 	}
 
 	function searchReference(otherTable, val){
-		var pk = '{{pks[0]}}';
+		{% if pks == null %}
+			var pk = "";
+		{% else %}
+			var pk = '{{pks[0]}}';
+		{% endif %}
 		table = otherTable;
 		order = null;
 		var stringVal = "" + val;
 		where = [[pk, '=', stringVal]];
 		reload_browse();
+	}
+
+	function performJoin(otherTable, val, thirdTable, keyName, message){
+		var pk = '{{pks[0]}}';
+		var stringVal = "" + val;
+		const params = new URLSearchParams(location.search);
+		params.set('table1pkName', pk);
+		params.set('table1pk', stringVal);
+		params.set('table2', otherTable);
+		params.set('table3', thirdTable);
+		params.set('join23', keyName);
+		params.set('message', message);
+
+		window.location = `/browse/double-join?${params.toString()}`;
 	}
 
 </script>
@@ -179,6 +198,7 @@ o	Search for common resolutions by product
 <div class="card">
 	<h2 class ="card-header">Browse</h2>
 	<div class="card-body">
+		{% if not double_join %}
 		<h4>This page handles browsing all entities in the database.</h4>
 		<button id="browse_customers_button" type="button" class="btn btn-primary" onclick="browse_category('customers')">Browse Customers</button>
 		<button id="browse_products_button" type="button" class="btn btn-primary" onclick="browse_category('products')">Browse Products</button>
@@ -189,6 +209,7 @@ o	Search for common resolutions by product
 		<button id="browse_orders_button" type="button" class="btn btn-primary" onclick="browse_category('orders')">Browse Orders</button>
 		<button id="browse_comments_button" type="button" class="btn btn-primary" onclick="browse_category('comments')">Browse Comments</button>
 		<br/><br/>
+		
 		<!-- Start search bars -->
 		{% if keys != None %}
 		<h3>Search...</h3>
@@ -220,7 +241,7 @@ o	Search for common resolutions by product
 			</div>
 			<br/><br/>
 		{% endif %}
-
+		{% endif %}
 		<!-- Start Table -->
 		{% if keys != None %}
 		<table class="table">
@@ -244,31 +265,46 @@ o	Search for common resolutions by product
 			<tbody>
 			{% for item in contents %}
 				<tr>
-					{% for k in range(num_types) %}
-						{% if item[k] == None %}
-							<td>{{ item[k] }}</td>
-						{% elif keys[k] in fks.keys() %}
-							<td><a href="/view/{{fks[keys[k]]}}/{{item[k]}}" >{{ item[k] }}</a></td>
-						{% elif keys[k] in pks %}
-							<td><a href="/view/{{table}}/{{item[k]}}" >{{ item[k] }}</a></td>
-						{% else %}
-							<td>{{ item[k] }}</td>
+					{% if num_types != None %}
+						{% for k in range(num_types) %}
+							{% if item[k] == None %}
+								<td>{{ item[k] }}</td>
+							{% elif keys[k] in fks.keys() %}
+								<td><a href="/view/{{fks[keys[k]]}}/{{item[k]}}" >{{ item[k] }}</a></td>
+							{% elif keys[k] in pks %}
+								<td><a href="/view/{{table}}/{{item[k]}}" >{{ item[k] }}</a></td>
+							{% else %}
+								<td>{{ item[k] }}</td>
+							{% endif %}
+						{% endfor %}
+						{% if not references == None %}
+							{% for row in references %}
+								<td><button type="button" class="btn btn-info" onclick="searchReference('{{row[1]}}', {{item[0]}})">Browse {{row[0]}}</button></td>
+							{% endfor %}
 						{% endif %}
-					{% endfor %}
-					{% if not references == None %}
-						{% for row in references %}
-							<td><button type="button" class="btn btn-info" onclick="searchReference('{{row[1]}}', {{item[0]}})">Browse {{row[0]}}</button></td>
+						{% if not joins == None %}
+							{% for row in joins %}
+							<td><button type="button" class="btn btn-info" onclick="performJoin('{{row[1]}}', {{item[0]}}, '{{row[2]}}', '{{row[3]}}', 'Browse {{row[0]}}')">Browse {{row[0]}}</button></td>
+							{% endfor %}
+						{% endif %}
+						{% if editable %}
+							<td><button type="button" class="btn btn-warning" onclick="edit({{ item[0] }})">edit...</button></td>
+							<td><button type="button" class="btn btn-danger" onclick="remove([{% for v in range(num_types) %} {% if types[v] or item[v] == None %} '{{item[v]}}', {% else %} {{item[v]}}, {% endif %}{% endfor %}])">DELETE</button></td>
+						{% endif %}
+					{% else %}
+						{% for k in item %}
+							<td>{{ k }}</td>
 						{% endfor %}
 					{% endif %}
-					<td><button type="button" class="btn btn-warning" onclick="edit({{ item[0] }})">edit...</button></td>
-					<td><button type="button" class="btn btn-danger" onclick="remove([{% for v in range(num_types) %} {% if types[v] or item[v] == None %} '{{item[v]}}', {% else %} {{item[v]}}, {% endif %}{% endfor %}])">DELETE</button></td>
 				</tr>
 			{% else %}
 				There are no contents...
 			{% endfor %}
 			</tbody>
 		</table>
-		<button type="button" class="btn btn-success" onclick="create()">Add a new entry in {{table}}</button>
+		{% if table != None %}
+			<button type="button" class="btn btn-success" onclick="create()">Add a new entry in {{table}}</button>
+		{% endif %}
 		{% else %}
 			<h2>Choose a category to continue.</h2>
 		{% endif %}

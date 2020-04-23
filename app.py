@@ -52,10 +52,26 @@ def browse_query():
 	pks = get_pks(table)
 	fks = get_fks(table)
 	references = get_references(table)
+	joins = get_joins(table)
+	editable = not (table=="orders")
 
 	flash(get_flash_string(table, where, order))
 
-	return render_template('browse.html', table=table, where=where, order=order, keys=keys, contents=contents, types=types, num_types=num_types, string_items=string_types, datetime_items=datetime_types, date_items=date_types, pks=pks, fks=fks, col_types=col_types, references=references)
+	return render_template('browse.html', table=table, where=where, order=order, keys=keys, contents=contents, types=types, num_types=num_types, string_items=string_types, datetime_items=datetime_types, date_items=date_types, pks=pks, fks=fks, col_types=col_types, references=references, joins=joins, double_join=False, editable=editable)
+
+@app.route('/browse/double-join')
+def browse_double_join():
+	table1pkName = request.args.get('table1pkName')
+	table1pk = request.args.get('table1pk')
+	table2 = request.args.get('table2')
+	table3 = request.args.get('table3')
+	join23 = request.args.get('join23')
+	message = request.args.get('message')
+	keys, contents = get_double_join(table1pkName, table1pk, table2, table3, join23)
+	print(keys)
+
+	flash(message)
+	return render_template('browse.html', keys=keys, contents=contents, table=None, where=None, order=None, types=None, num_types=None, string_items=None, datetime_items=None, date_items=None, pks=None, fks=None, col_types=None, references=None, joins=None, double_join=True, editable=False)
 
 @app.route('/create/<type>')
 def create(type):
@@ -188,7 +204,7 @@ def update_redirect(table, update_type):
 		flash("Create new " + table + " entry!")
 	elif update_type == "remove":
 		flash("Removed entry from " + table + "!")
-	return redirect("/browse/" + table)
+	return redirect("/browse?table=" + table)
 
 def processT1(t1):
 	t1 = t1.replace("&gt;", ">")
@@ -232,6 +248,25 @@ def get_query(table, where, order):
 	header = [x['name'] for x in inspector.get_columns(table)]
 
 	return header, rows
+
+def get_double_join(table1pkName, table1pk, table2, table3, join23):
+	table3_col_headers = [x['name'] for x in inspector.get_columns(table3)]
+	statement_text = "SELECT "
+
+	for h in table3_col_headers:
+		statement_text = statement_text + table3 + "." + h + ", "
+	statement_text = statement_text[:-2] + " FROM " + table2 + ", " + table3 + " WHERE " + table2 + "." + table1pkName + "=" + table1pk + " AND " + table2 + "." + join23 + "=" + table3 + "." + join23 + ";"
+	rows = []
+	with engine.connect() as con:
+		statement = text(statement_text)
+		rs = con.execute(statement)
+
+		for row in rs:
+			rows.append(row)
+
+	return table3_col_headers, rows
+
+
 
 def get_columns(type):
 	"Returns a dictionary containing (column name, data type)"
@@ -369,3 +404,14 @@ def get_references(table):
 		'orders': None,
 		'comments':None
 	}[table]
+
+def get_joins(table):
+	if table == None:
+		return None
+	joins = {
+		'customers': [['products purchased by this customer', 'orders', 'products', 'product_id']],
+		'products': [['customers who purchased this product', 'orders', 'customers', 'customer_id'], ['common resolutions involving this product', 'cases', 'resolutions', 'resolution_id']]
+	}
+	if table not in joins.keys():
+		return None
+	return joins[table]
