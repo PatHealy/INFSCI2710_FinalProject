@@ -206,6 +206,29 @@ def update_redirect(table, update_type):
 		flash("Removed entry from " + table + "!")
 	return redirect("/browse?table=" + table)
 
+@app.route('/aggregation')
+def aggregation():
+	queries = [
+		"""SELECT products.p_name, count(*) FROM cases, products WHERE cases.product_id=products.product_id GROUP BY products.product_id ORDER BY count(*) DESC;""",
+		"""SELECT employees.e_first, employees.e_last, count(*) from cases, employees WHERE cases.employee_id=employees.employee_id AND cases.c_status='Closed' GROUP BY employees.employee_id ORDER BY count(*) DESC;"""]
+	#,
+	"""SELECT customers.c_first, customers.c_last, count(*) from cases, customers WHERE cases.customer_id=customers.customer_id GROUP BY customers.customer_id ORDER BY count(*) DESC;""",
+	"""SELECT customers.c_company, count(*) FROM customers, cases WHERE customers.customer_id=customers.customer_id GROUP BY customers.c_company ORDER BY count(*) DESC;"""
+	#]
+
+	rows_returned = []
+	with engine.connect() as con:
+		for statement_text in queries:
+			rows = []
+			statement = text(statement_text)
+			rs = con.execute(statement)
+
+			for row in rs:
+				rows.append(row)
+			rows_returned.append(rows)
+
+	return render_template('aggregation.html', rows=rows_returned)
+
 def processT1(t1):
 	t1 = t1.replace("&gt;", ">")
 	t1 = t1.replace("&lt;", "<")
@@ -265,8 +288,6 @@ def get_double_join(table1pkName, table1pk, table2, table3, join23):
 			rows.append(row)
 
 	return table3_col_headers, rows
-
-
 
 def get_columns(type):
 	"Returns a dictionary containing (column name, data type)"

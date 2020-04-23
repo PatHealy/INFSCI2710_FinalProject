@@ -1,0 +1,87 @@
+{% extends "layout.html" %}
+{% block head %}
+
+{% endblock %}
+{% block body %}
+
+
+<h3>Support cases by product (ordered by largest)</h3>
+<table class="table">
+	<thead class="thead-light">
+		<tr>
+			<th scope="col">Product Name</th>
+			<th scope="col">Total Number of Cases</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for item in rows[0] %}
+		<tr>
+			<td>{{item[0]}}</td>
+			<td>{{item[1]}}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+
+<h3>Support cases closed by employee (ordered by largest)</h3>
+<table class="table">
+	<thead class="thead-light">
+		<tr>
+			<th scope="col">Employee First Name</th>
+			<th scope="col">Employee Last Name</th>
+			<th scope="col">Total Number of Cases Closed</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for item in rows[1] %}
+		<tr>
+			<td>{{item[0]}}</td>
+			<td>{{item[1]}}</td>
+			<td>{{item[2]}}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+<h3>Support cases by customer (ordered by largest)</h3>
+<table class="table">
+	<thead class="thead-light">
+		<tr>
+			<th scope="col">Customer First Name</th>
+			<th scope="col">Customer Last Name</th>
+			<th scope="col">Total Number of Cases</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for item in rows[2] %}
+		<tr>
+			<td>{{item[0]}}</td>
+			<td>{{item[1]}}</td>
+			<td>{{item[2]}}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+
+<h3>Support cases by customer’s company (ordered by largest)</h3>
+<table class="table">
+	<thead class="thead-light">
+		<tr>
+			<th scope="col">Company Name</th>
+			<th scope="col">Total Number of Cases</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for item in rows[3] %}
+		<tr>
+			<td>{{item[0]}}</td>
+			<td>{{item[1]}}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+
+{% endblock %}

@@ -5,12 +5,56 @@
 {% block body %}
 	<h2>Home Page</h2>
 	<h3>Common Operations:</h3>
-	<br/>
-	<h4>Browsing!</h4>
-	<p>Most browse operations can be handled on the <a href="/browse">browse page</a></p>. The browse page allows you to search by any column of the database and layer multiple searches.
+	<p>As a busy help-desk operator, we assume you will want to get to these operations the most quickly:</p>
 	<ul>
 		<li>
-			<a>TODO: List common actions</a>
+			Todo
 		</li>
 	</ul>
+	<br/>
+	<h4>Browsing!</h4>
+	<p>Most browse operations can be handled on the <a href="/browse">browse page</a></p>. The browse page allows you to...
+	<ul>
+		<li>
+			<p>Casually browse any table of the database</p>
+		</li>
+		<li>
+			<p>Search by any column, including multiple layered searches of the same table!</p>
+		</li>
+		<li>
+			<p>Click the headers to re-order the contents by that column.</p>
+		</li>
+		<li>
+			<p>Perform more complicated searches with the light-blue buttons on each row (they say what they do!)</p>
+		</li>
+		<li>
+			<p>Edit or delete any given row.</p>
+		</li>
+	</ul>
+	<br/>
+	<h4>Data Agregation</h4>
+	<p>Check out the <a href="/aggregation">data aggregation page</a> for a collection of dynamically-calculated metrics, which you may find useful to the business.</p>
+
 {% endblock %}
+
+<!--
+Support cases by product (ordered by largest)
+	SELECT product.p_name, count(*) FROM cases, product WHERE cases.product_id=product.product_id GROUP BY product_id ORDER BY count(*) DESC;
+-->
+
+<!--
+Support cases closed by employee (ordered by largest)
+	SELECT employee.name, count(*) from cases, employee WHERE cases.employee_id=employee.employee_id AND cases.status='Closed' GROUP BY employee.employee_id ORDER BY count(*) DESC;
+-->
+
+<!--
+Support cases by customer (ordered by largest)
+	SELECT customer.name, count(*) from cases, customers WHERE cases.customer_id=customer.customer_id GROUP BY customer.customer_id ORDER BY count(*) DESC;
+
+-->
+
+<!--
+Support cases by customer’s company(ordered by largest)
+	SELECT * FROM customers, cases WHERE customers.customer_id=customers.customer_id GROUP BY customers.company ORDER BY count(*) DESC;
+
+-->
