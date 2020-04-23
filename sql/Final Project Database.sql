@@ -69,10 +69,13 @@ create table Cases (
     c_timestart timestamp,
     c_timeend timestamp,
     employee_id int,
+    customer_id int,
     product_id int,
     resolution_id int,
     primary key (case_id),
     foreign key (employee_id) references Employees
+        on delete set null,
+    foreign key (customer_id) references Customers
         on delete set null,
     foreign key (product_id) references Products
         on delete set null,
